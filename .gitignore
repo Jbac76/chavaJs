@@ -42,3 +42,10 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# Internal / not for the repo
+ROADMAP.md
+SECURITY.md
+CODE_OF_CONDUCT.md
+PHASE8_REPORT.md
+ai/
