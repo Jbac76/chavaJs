@@ -33,7 +33,7 @@ export { ServiceProvider } from './container/ServiceProvider';
 
 // HTTP
 export { Controller } from './http/Controller';
-export { Kernel } from './http/Kernel';
+export { HttpKernel } from './http/Kernel';
 export { Request } from './http/Request';
 export { Response } from './http/Response';
 export { Route as RouteClass } from './http/Route';
@@ -79,7 +79,7 @@ export type { MailManager } from './mail/MailManager';
 // Notifications
 export { Notifiable } from './notifications/Notifiable';
 export type { NotificationManager } from './notifications/NotificationManager';
-export type { Notification, DatabaseNotificationData, NotifiableModel } from './notifications/types';
+export type { Notification as NotificationType, DatabaseNotificationData, NotifiableModel } from './notifications/types';
 
 // Scheduling
 export type { Scheduler as SchedulerService } from './scheduling/Scheduler';

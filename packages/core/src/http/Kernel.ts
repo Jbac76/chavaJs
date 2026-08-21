@@ -51,10 +51,11 @@ export class HttpKernel {
       );
       const resolvedParams = await this.resolveModelBindings(router, match.params);
       const pipeline = new Pipeline(middleware);
-      const response = await runWithRequestContext(request, resolvedParams, () =>
-        pipeline.run(request, () => this.dispatch(request, match.route.action, resolvedParams)),
+      const resolvedRequest = request!;
+      const response = await runWithRequestContext(resolvedRequest, resolvedParams, () =>
+        pipeline.run(resolvedRequest, () => this.dispatch(resolvedRequest, match.route.action, resolvedParams)),
       );
-      await this.respond(res, request, response);
+      await this.respond(res, resolvedRequest, response);
     } catch (error) {
       await this.handleException(res, request, error);
     }
