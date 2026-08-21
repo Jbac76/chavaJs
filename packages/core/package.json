@@ -1,0 +1,46 @@
+{
+  "name": "@chavajs/core",
+  "version": "0.0.3",
+  "description": "chavaJs core — the Laravel-equivalent container, router, ORM, validation, auth, queue, events, mail, notifications and scheduling, in TypeScript.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "files": [
+    "src",
+    "LICENSE"
+  ],
+  "keywords": [
+    "chavajs",
+    "laravel",
+    "fullstack",
+    "orm",
+    "typescript",
+    "framework"
+  ],
+  "peerDependencies": {
+    "pg": "^8.0.0",
+    "mysql2": "^3.0.0",
+    "bullmq": "^5.0.0",
+    "ioredis": "^5.0.0",
+    "nodemailer": "^6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "pg": {
+      "optional": true
+    },
+    "mysql2": {
+      "optional": true
+    },
+    "bullmq": {
+      "optional": true
+    },
+    "ioredis": {
+      "optional": true
+    },
+    "nodemailer": {
+      "optional": true
+    }
+  }
+}

@@ -1,0 +1,28 @@
+# Dependencies
+/node_modules
+
+# Build output (Vite emits its manifest here — never commit it)
+/public/build
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+*.log
+/storage/logs/*
+
+# Test coverage
+/coverage
+
+# Framework runtime caches
+/.lumen-cache
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

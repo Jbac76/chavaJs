@@ -1,0 +1,37 @@
+# Throwaway Postgres + MySQL for the chavaJs driver test matrix.
+#
+#   docker compose -f docker-compose.test.yml up -d
+#   TEST_ALL_DRIVERS=1 DB_CONNECTION=pg    DB_HOST=127.0.0.1 DB_PORT=5432 DB_DATABASE=chava_test DB_USERNAME=chava DB_PASSWORD=chava npm test
+#   TEST_ALL_DRIVERS=1 DB_CONNECTION=mysql DB_HOST=127.0.0.1 DB_PORT=3306 DB_DATABASE=chava_test DB_USERNAME=chava DB_PASSWORD=chava npm test
+#
+#   docker compose -f docker-compose.test.yml down -v   # wipe volumes
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: chava
+      POSTGRES_PASSWORD: chava
+      POSTGRES_DB: chava_test
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U chava -d chava_test']
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: chava_test
+      MYSQL_USER: chava
+      MYSQL_PASSWORD: chava
+    ports:
+      - '3306:3306'
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -uroot -proot --silent']
+      interval: 2s
+      timeout: 3s
+      retries: 20

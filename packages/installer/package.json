@@ -1,0 +1,36 @@
+{
+  "name": "@chavajs/installer",
+  "version": "0.0.3",
+  "description": "chavaJs installer — the Laravel Installer equivalent. `chava new <name>` scaffolds a ready-to-run chavaJs app, downloading the framework from npm.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "chava": "bin/chava.js"
+  },
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "keywords": [
+    "chavajs",
+    "laravel",
+    "installer",
+    "scaffold",
+    "cli",
+    "typescript"
+  ],
+  "dependencies": {
+    "commander": "12.1.0",
+    "tar": "^7.4.3",
+    "tsx": "^4.23.11"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.4"
+  },
+  "scripts": {
+    "test": "vitest run"
+  }
+}

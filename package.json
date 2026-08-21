@@ -1,0 +1,54 @@
+{
+  "name": "chavajs",
+  "version": "0.1.2",
+  "description": "chavaJs — a Laravel-equivalent full-stack framework for Node.js. React + Inertia + Tailwind + shadcn/ui + Motion on the front, a Laravel-style container/router/middleware stack on the back.",
+  "type": "module",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "examples/*"
+  ],
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "scripts": {
+    "assemble": "node scripts/assemble-framework.mjs",
+    "build:core": "node scripts/build-core-package.mjs",
+    "build:cli": "node scripts/build-cli-console.mjs",
+    "build:installer": "node scripts/build-installer-package.mjs",
+    "pre-publish": "node scripts/pre-publish.mjs",
+    "publish:core": "npm run build:core && npm publish ./dist/@chavajs/core --access public",
+    "publish:cli": "npm run build:cli && npm publish ./dist/@chavajs/cli --access public",
+    "publish:installer": "npm run build:installer && npm publish ./dist/@chavajs/installer --access public",
+    "typecheck": "npm run typecheck --prefix examples/starter",
+    "test": "npm test --prefix examples/starter && npm test --prefix packages/installer",
+    "test:watch": "npm run test:watch --prefix examples/starter",
+    "test:browser": "npm run test:browser --prefix examples/starter",
+    "test:postgres": "npm run test:postgres --prefix examples/starter",
+    "test:mysql": "npm run test:mysql --prefix examples/starter",
+    "build": "npm run build --prefix examples/starter",
+    "vite": "npm run vite --prefix examples/starter",
+    "dev": "npm run dev --prefix examples/starter"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "mysql2": "^3.23.2",
+    "pg": "^8.23.0",
+    "tsx": "^4.23.11",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7",
+    "vitest": "^3.0.4"
+  },
+  "peerDependencies": {
+    "pg": "^8.0.0",
+    "mysql2": "^3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "pg": {
+      "optional": true
+    },
+    "mysql2": {
+      "optional": true
+    }
+  }
+}

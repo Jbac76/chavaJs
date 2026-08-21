@@ -1,0 +1,25 @@
+{
+  "name": "@chavajs/cli",
+  "version": "0.0.3",
+  "description": "chavaJs console — the `js` (php-artisan equivalent) command for running inside an app: serve, migrate, make:*, tinker, queue:work, schedule:run and more. Also exposes `chava`. Does not include `new` (that lives in @chavajs/installer).",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "bin": {
+    "chava": "bin/chava.js",
+    "js": "bin/js.js"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "keywords": [
+    "chavajs",
+    "laravel",
+    "cli",
+    "artisan",
+    "typescript"
+  ]
+}

@@ -1,0 +1,165 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typecheck-test-build:
+    name: Typecheck, tests & build (SQLite)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Assemble the framework into the reference app
+        run: npm run assemble
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit & feature tests (SQLite)
+        run: npm test
+
+      - name: Production asset build
+        run: npm run build
+
+  database-drivers:
+    name: Tests against Postgres & MySQL
+    runs-on: ubuntu-latest
+    needs: typecheck-test-build
+    strategy:
+      fail-fast: false
+      matrix:
+        driver: [pg, mysql2]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: chava
+          POSTGRES_PASSWORD: chava
+          POSTGRES_DB: chava_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U chava -d chava_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 20
+        # Only spin up postgres/mysql for the matching matrix row via a
+        # dynamic condition is not possible in services; both containers run
+        # and the test connects to the one matching its DB_CONNECTION.
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: chava_test
+          MYSQL_USER: chava
+          MYSQL_PASSWORD: chava
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Assemble the framework into the reference app
+        run: npm run assemble
+
+      - name: Run the Vitest suite against the driver
+        env:
+          TEST_ALL_DRIVERS: '1'
+          DB_CONNECTION: ${{ matrix.driver }}
+          DB_HOST: 127.0.0.1
+          DB_PORT: ${{ matrix.driver == 'pg' && '5432' || '3306' }}
+          DB_DATABASE: chava_test
+          DB_USERNAME: chava
+          DB_PASSWORD: chava
+        run: npm run test --prefix examples/starter
+
+  browser:
+    name: Browser tests (Playwright)
+    runs-on: ubuntu-latest
+    needs: typecheck-test-build
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Assemble the framework into the reference app
+        run: npm run assemble
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser tests
+        run: npm run test:browser
+
+  installer:
+    name: chava new scaffold & boot
+    runs-on: ubuntu-latest
+    needs: typecheck-test-build
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Scaffold a fresh app in a clean directory
+        run: |
+          mkdir -p /tmp/scaffold && cd /tmp/scaffold
+          node "$GITHUB_WORKSPACE/packages/installer/bin/chava.js" new ci-app \
+            --database=sqlite --auth --skip-install
+          cd ci-app
+          npm install
+
+      - name: Typecheck the scaffolded app
+        run: npm run typecheck
+        working-directory: /tmp/scaffold/ci-app
+
+      - name: Migrate + seed the scaffolded app
+        run: |
+          npx js migrate
+          npx js db:seed
+
+      - name: Boot the dev server and assert the root route responds
+        run: |
+          npx js serve > /tmp/chava-server.log 2>&1 &
+          SERVER_PID=$!
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8080/ > /tmp/root.html 2>/dev/null; then break; fi
+            sleep 1
+          done
+          kill $SERVER_PID 2>/dev/null || true
+          grep -q '<div id="app"' /tmp/root.html || (echo 'Root page did not render the Inertia shell' && exit 1)

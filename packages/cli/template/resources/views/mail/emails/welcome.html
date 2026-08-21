@@ -1,0 +1,15 @@
+<h1>Welcome, {{ user.name }}!</h1>
+
+<p>Thanks for joining chavaJs. Your account is ready and your inbox is
+private to you — no spam, ever.</p>
+
+@if (user.is_admin)
+  <p>You have administrator privileges.</p>
+@endif
+
+<ul>
+  <li>Email: {{ user.email }}</li>
+  <li>Member since: {{ user.created_at }}</li>
+</ul>
+
+<p>— The chavaJs Team</p>
