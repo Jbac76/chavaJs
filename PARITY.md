@@ -5,7 +5,7 @@ deliberate deviations. Statuses: `planned` · `in-progress` · `done` · `wontfi
 
 ---
 
-## Phase 1 — Foundation & Service Container
+## Foundation & Service Container
 
 | Laravel | chavaJs | Status | Notes |
 | --- | --- | --- | --- |
@@ -18,7 +18,7 @@ deliberate deviations. Statuses: `planned` · `in-progress` · `done` · `wontfi
 | Contextual bindings (`when(…)->needs(…)`) | `container.when(X).needs('y').give(z)` | `done` | `ContextualBindingBuilder` in `src/container/Container.ts`; resolves constructor params by name against the contextual table |
 | `App::basePath()` etc. | `app.path()`, `publicPath()`, `storagePath()` | `done` | |
 
-## Phase 2 — Routing & HTTP
+## Routing & HTTP
 
 | Laravel | chavaJs | Status | Notes |
 | --- | --- | --- | --- |
@@ -38,7 +38,7 @@ deliberate deviations. Statuses: `planned` · `in-progress` · `done` · `wontfi
 | Multipart file uploads (`$request->file()`) | `src/http/multipart.ts` bundled into `Request.file()` | `done` | Dependency-free `multipart/form-data` parser; returns an `UploadedFile` (`getClientOriginalName`, `getSize`, `content`, …) |
 | Route caching | — | `planned` | Lower priority than in Laravel — Node's startup cost is already small vs PHP's per-request bootstrap, so a serialized route cache buys little here |
 
-## Phase 3 — Database & ORM (Eloquent)
+## Database & ORM (Eloquent)
 
 | Laravel | chavaJs | Status | Notes |
 | --- | --- | --- | --- |
@@ -56,7 +56,7 @@ deliberate deviations. Statuses: `planned` · `in-progress` · `done` · `wontfi
 | Schema introspection (`hasTable`, `hasColumn`) | `Schema.hasTable()`, `Schema.hasColumn()` | `done` | |
 | Postgres / MySQL drivers | `PostgresConnection` / `MySQLConnection` (`src/database/connections/`) | `done` | Optional peer deps `pg` / `mysql2`; per-driver grammars (auto-increment, `ON CONFLICT` vs `ON DUPLICATE KEY`, identifier quoting, `RANDOM()` vs `RAND()`); same `Connection` interface, swap via `config/database.ts` + `.env`. Matrix-tested via `TEST_ALL_DRIVERS=1` / `docker-compose.test.yml` |
 
-## Phase 4 — Auth, Validation, Authorization
+## Auth, Validation, Authorization
 
 | Laravel | chavaJs | Status | Notes |
 | --- | --- | --- | --- |
@@ -74,7 +74,7 @@ deliberate deviations. Statuses: `planned` · `in-progress` · `done` · `wontfi
 | `auth` / `guest` / `verified` / `can:` middleware | `Authenticate` (`auth` / `auth:api`), `RedirectIfAuthenticated`, `EnsureEmailIsVerified`, `Can` | `done` | Middleware params supported (`auth:api`, `can:delete,user`) |
 | Email verification | `EnsureEmailIsVerified` + `email_verified_at` column | `done` | Verified-at set by seed; resend/notify UI `planned` |
 
-## Phase 5 — Jobs, Queues, Events, Notifications, Scheduling
+## Jobs, Queues, Events, Notifications, Scheduling
 
 | Laravel | chavaJs | Status | Notes |
 | --- | --- | --- | --- |
@@ -97,7 +97,7 @@ deliberate deviations. Statuses: `planned` · `in-progress` · `done` · `wontfi
 | `schedule:run` / `schedule:list` | `chava schedule:run` / `chava schedule:list` | `done` | Cron expression matcher (steps, ranges, lists) + human-readable descriptions |
 | Model events for register flows | `AuthController.register` dispatches `UserRegistered` → auto-discovered listener → welcome notification | `done` | End-to-end demo |
 
-## Phase 6 — CLI (`chava`, Artisan-equivalent)
+## CLI (`chava`, Artisan-equivalent)
 
 | Laravel | chavaJs | Status |
 | --- | --- | --- |
@@ -110,7 +110,7 @@ deliberate deviations. Statuses: `planned` · `in-progress` · `done` · `wontfi
 | `queue:work` / `queue:listen` / `schedule:run` / `schedule:list` | `chava queue:work` / `queue:listen` / `schedule:run` / `schedule:list` | `done` | `queue:listen` spawns a fresh `queue:work --once` per batch (Laravel semantics — picks up changed job code) |
 | Single-action controllers (`make:controller --invokable`) | `__invoke()` dispatch in `HttpKernel` | `done` | `Route.get('/x', MyController)` resolves the class and calls `__invoke` |
 
-## Phase 7 — Frontend (Inertia + React + Tailwind + shadcn + Motion)
+## Frontend (Inertia + React + Tailwind + shadcn + Motion)
 
 | Laravel | chavaJs | Status |
 | --- | --- | --- |
@@ -126,7 +126,7 @@ deliberate deviations. Statuses: `planned` · `in-progress` · `done` · `wontfi
 | Database-channel notification inbox | `NotificationController` + `resources/js/Pages/Notifications/Index.tsx` | `done` | Lists read + unread, per-item `markAsRead()` and `markAllAsRead()` via the Notifiable API, ownership-checked (403); optimistic exit animations + stagger |
 | `routes/console.php` scheduling | `routes/console.ts` | `done` | Registered from `RouteServiceProvider` alongside `web`/`api` groups; consumed by `chava schedule:run` / `schedule:list` |
 
-## Phase 8 — Testing, Docs, DX
+## Testing, Docs, DX
 
 | Laravel | chavaJs | Status |
 | --- | --- | --- |

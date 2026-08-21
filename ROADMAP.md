@@ -1,33 +1,38 @@
 # chavaJs Roadmap
 
 Statuses: `planned` · `in-progress` · `done` · `wontfix`. Every item also lives
-in [`PARITY.md`](./PARITY.md) with its Laravel-equivalent mapping. This file
-tracks the *next* work, not the history (see `CHANGELOG.md` for what shipped).
+in [`PARITY.md`](./PARITY.md) with its Laravel-equivalent mapping.
 
-## Next up (post-v1.0.0-rc.1)
+## Done
 
-- [ ] **Publishable `@chavajs/*` packages.** The monorepo split exists
-      (`packages/core`, `packages/cli`, `packages/inertia-react`) and apps
-      consume the framework by *assembly* (`create-chava-app` merges the
-      packages into the app's `src/` + `bin/`). Publishing true npm packages
-      with `exports` maps, `.d.ts` types, and Changesets-driven releases is the
-      remaining packaging step.
-- [ ] **Documentation site** under `docs/` (VitePress): Getting Started,
-      Concepts (routing/ORM/auth), Digging Deeper (queues/events/mail),
-      Frontend (Inertia/shadcn/Motion), Testing, and the Laravel → chavaJs
-      cheat-sheet ported from `README.md` + `PARITY.md`.
+- [x] Publishable `@chavajs/*` packages (`@chavajs/core`, `@chavajs/cli`, `@chavajs/installer`).
+- [x] Documentation site served at `/docs` (26 pages, built into the framework distribution).
+- [x] `@faker-js/faker` moved to devDependencies.
+- [x] `bin/chava.js` graceful tsx error message.
+- [x] Multi-connection migrations (`--database` flag).
+- [x] Soft deletes scope leak fix (qualified column names).
+- [x] Queue serialization (`__chava_model` / `__chava_date` markers).
+- [x] Request body size limits + 413 handling.
+- [x] Session ID validation (strict 64-char hex).
+- [x] `APP_KEY` enforcement in production.
+- [x] Mass assignment safety (`isFillable()` blocks empty fillable+guarded).
+- [x] Peer dep ranges fixed (`^` instead of `>=`).
+- [x] ORM relations: hasMany, hasOne, belongsTo, belongsToMany, hasManyThrough, morphMany, morphTo.
+
+## Next up
+
 - [ ] **`@inject()` decorator** support as an explicit alternative to
-      by-name constructor injection (`planned` in PARITY.md Phase 1).
-- [ ] **Route caching** (`planned` in PARITY.md Phase 2). Lower priority than
+      by-name constructor injection (`planned` in PARITY.md).
+- [ ] **Route caching** (`planned` in PARITY.md). Lower priority than
       in Laravel — Node's startup cost is already small compared to PHP's
       per-request bootstrap.
-- [ ] **Broadcast notification channel** (`planned` in PARITY.md Phase 5).
+- [ ] **Broadcast notification channel** (`planned` in PARITY.md).
       Only sensible once a WebSocket/Pusher-equivalent story exists.
-- [ ] **Email verification resend/notify UI** (`planned` in PARITY.md Phase 4).
+- [ ] **Email verification resend/notify UI** (`planned` in PARITY.md).
       `EnsureEmailIsVerified` + `email_verified_at` already exist; the resend
       flow and UI are missing.
 - [ ] **React Email / MJML** as an alternative mail-template source
-      (`planned` in PARITY.md Phase 5).
+      (`planned` in PARITY.md).
 - [ ] **`good first issue`s**: context-free candidates — the smaller
       `planned` items above are self-contained.
 
@@ -35,7 +40,7 @@ tracks the *next* work, not the history (see `CHANGELOG.md` for what shipped).
 
 - [ ] Keep `npm run test:postgres` / `test:mysql` green via
       `docker-compose.test.yml` (CI matrix).
-- [ ] Keep the `create-chava-app` template in sync with `examples/starter`
+- [ ] Keep the scaffolded app template in sync with `examples/starter`
       (the reference implementation).
 
 ## Won't fix (deliberate deviations)

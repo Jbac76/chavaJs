@@ -15,16 +15,16 @@ no PHP anywhere.
 
 - [Requirements](#requirements)
 - [Stack](#stack)
-- [What works right now](#what-works-right-now-v100-rc1--phases-1-8--monorepo-repair)
-- **Phase 0 — Installation & first app**
-  - [Install the CLI](#phase-0--installation--first-app)
+- [What works right now](#what-works-right-now)
+- [Installation & first app](#installation--first-app)
+  - [Install the CLI](#install-the-installer)
   - [Create an app (`chava new`)](#create-an-app-chava-new)
   - [What `chava new` produces](#what-chava-new-produces)
   - [Run it](#run-it)
   - [Configuration: `.env` reference](#env-reference)
   - [Configuration: `config/*.ts` reference](#configts-reference)
   - [Developing the framework itself](#getting-started-developing-the-framework-itself)
-- **Phase 1 — HTTP layer**
+- [HTTP layer](#http-layer)
   - [Request lifecycle & `bootstrap/app.ts`](#request-lifecycle--bootstrappts)
   - [Routing](#routing)
   - [Controllers](#controllers)
@@ -33,21 +33,21 @@ no PHP anywhere.
   - [The Response object](#the-response-object)
   - [Validation](#validation)
   - [Sessions & CSRF](#sessions--csrf)
-- **Phase 2 — Database & ORM**
+- [Database & ORM](#database--orm)
   - [Connections](#connections)
   - [Migrations & the Blueprint](#migrations--the-blueprint)
   - [Models](#models)
   - [The query builder](#the-query-builder)
   - [Relationships](#relationships)
   - [Factories & seeders](#factories--seeders)
-- **Phase 3 — Auth & authorization**
+- [Auth & authorization](#auth--authorization)
   - [Guards & configuration](#guards--configuration)
   - [The `Auth` facade](#the-auth-facade)
   - [Password hashing](#password-hashing)
   - [Gates & policies](#gates--policies)
   - [Auth middleware & email verification](#auth-middleware--email-verification)
   - [Auth, end to end](#auth-end-to-end)
-- **Phase 4 — Services & background work**
+- [Services & background work](#services--background-work)
   - [The service container](#the-service-container)
   - [Facades](#facades)
   - [Events & listeners](#events--listeners)
@@ -56,26 +56,25 @@ no PHP anywhere.
   - [Notifications](#notifications)
   - [Scheduling](#scheduling)
   - [Events, queues, mail & notifications, end to end](#events-queues-mail--notifications-end-to-end)
-- **Phase 5 — Frontend (Inertia + React)**
+- [Frontend (Inertia + React)](#frontend-inertia--react)
   - [The Inertia server adapter](#the-inertia-server-adapter)
   - [The React app](#the-react-app)
   - [shadcn/ui, Tailwind & Motion](#shadcnui-tailwind--motion)
   - [Vite dev & production](#vite-dev--production)
-- **Phase 6 — CLI reference**
+- [CLI reference](#cli-reference)
   - [Every command & flag](#every-command--flag)
   - [Tinker, end to end](#tinker-end-to-end)
-- **Phase 7 — Testing**
+- [Testing](#testing)
   - [Unit & feature tests](#unit--feature-tests)
   - [Database testing](#database-testing)
   - [Browser tests (Playwright)](#browser-tests-playwright)
   - [CI](#ci)
-- **Phase 8 — Deployment & production**
+- [Deployment & production](#deployment--production)
   - [Production build](#production-build)
   - [Process management](#process-management)
   - [Background workers](#background-workers)
   - [Reverse proxy & production notes](#reverse-proxy--production-notes)
 - [Laravel → chavaJs cheat-sheet](#laravel--chavajs-cheat-sheet)
-- [Roadmap](#roadmap)
 - [License](#license)
 
 ## Requirements
@@ -95,7 +94,7 @@ no PHP anywhere.
 | Build    | Vite (with a laravel-vite-plugin-equivalent manifest)                 |
 | Tests    | Vitest (+ Playwright for browser specs)                               |
 
-## What works right now (v0.0.3 — Phases 1–8 + monorepo repair)
+## What works right now
 
 This repo is the **source repository**: the framework is split into three
 packages (`packages/core`, `packages/cli`, `packages/inertia-react`) and
@@ -172,7 +171,7 @@ bundles its framework.
 
 ---
 
-## Phase 0 — Installation & first app
+## Installation & first app
 
 ### Install the installer
 
@@ -482,7 +481,7 @@ npm run assemble        # re-merge packages/* into the reference app after edits
 
 ---
 
-## Phase 1 — HTTP layer
+## HTTP layer
 
 ### Request lifecycle & `bootstrap/app.ts`
 
@@ -751,7 +750,7 @@ The `Response` class mirrors `Illuminate\Http\Response`: `status`,
 `header`, `withHeaders`, `contentType`, `json`, `html`, `send`, `redirect`,
 `cookie`, and static helpers `json`, `html`, `redirect`, `noContent`.
 `Inertia.render()` returns a `Response` subclass that implements the Inertia
-protocol (see [Phase 5](#phase-5--frontend-inertia--react)).
+protocol (see [Frontend](#frontend-inertia--react)).
 
 ### Validation
 
@@ -877,7 +876,7 @@ group.
 
 ---
 
-## Phase 2 — Database & ORM
+## Database & ORM
 
 ### Connections
 
@@ -1169,7 +1168,7 @@ and `chava make:seeder UserSeeder`.
 
 ---
 
-## Phase 3 — Auth & authorization
+## Auth & authorization
 
 ### Guards & configuration
 
@@ -1287,7 +1286,7 @@ Route.delete("/users/{user}", [UserController, "destroy"]).middleware(
 The template's email-verification flow: `email_verified_at` is a nullable
 timestamp; `verified` middleware checks it. The same column powers the shared
 `auth.user` Inertia prop, and the register flow dispatches
-`UserRegistered` → welcome notification (see Phase 4).
+`UserRegistered` → welcome notification (see [Services & background work](#services--background-work)).
 
 ### Auth, end to end
 
@@ -1342,7 +1341,7 @@ props, and CSRF protection automatically.
 
 ---
 
-## Phase 4 — Services & background work
+## Services & background work
 
 ### The service container
 
@@ -1694,7 +1693,7 @@ js schedule:list                                 # list all tasks
 
 ---
 
-## Phase 5 — Frontend (Inertia + React)
+## Frontend (Inertia + React)
 
 chavaJs ships with an **Inertia server adapter** (the React
 `@inertiajs/react` client is a peer dependency of every new app), so you build
@@ -1789,11 +1788,11 @@ server validation errors into shadcn `Label` + animated `FieldError` fields
   `public/build/` (`manifest.json` or `.vite/manifest.json`, the
   laravel-vite-plugin convention); `HtmlRenderer` resolves the entry's JS/CSS
   from it and emits `<link>`/`<script>` tags. Serve the app in production mode
-  (see [Phase 8](#phase-8--deployment--production)).
+  (see [Deployment & production](#deployment--production)).
 
 ---
 
-## Phase 6 — CLI reference
+## CLI reference
 
 Run any command with `js <command>` inside an app (the `php artisan`
 equivalent — it runs the app's own bundled CLI), or globally with
@@ -1870,7 +1869,7 @@ sandbox — input runs with your host privileges.
 
 ---
 
-## Phase 7 — Testing
+## Testing
 
 ### Unit & feature tests
 
@@ -1931,7 +1930,7 @@ npm run test:browser
 
 ---
 
-## Phase 8 — Deployment & production
+## Deployment & production
 
 ### Production build
 
