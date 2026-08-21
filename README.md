@@ -87,13 +87,13 @@ no PHP anywhere.
 
 ## Stack
 
-| Layer | Technology |
-| --- | --- |
-| Runtime | Node.js + TypeScript (strict) |
-| HTTP | Node `http` with a Laravel-style router/middleware API on top |
+| Layer    | Technology                                                            |
+| -------- | --------------------------------------------------------------------- |
+| Runtime  | Node.js + TypeScript (strict)                                         |
+| HTTP     | Node `http` with a Laravel-style router/middleware API on top         |
 | Frontend | React 18 + **Inertia.js** + Tailwind CSS + **shadcn/ui** + **Motion** |
-| Build | Vite (with a laravel-vite-plugin-equivalent manifest) |
-| Tests | Vitest (+ Playwright for browser specs) |
+| Build    | Vite (with a laravel-vite-plugin-equivalent manifest)                 |
+| Tests    | Vitest (+ Playwright for browser specs)                               |
 
 ## What works right now (v0.0.3 — Phases 1–8 + monorepo repair)
 
@@ -101,11 +101,11 @@ This repo is the **source repository**: the framework is split into three
 packages (`packages/core`, `packages/cli`, `packages/inertia-react`) and
 published as three npm packages:
 
-| Package | Role |
-| --- | --- |
+| Package              | Role                                                                                                           |
+| -------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `@chavajs/installer` | The Laravel Installer equivalent — `chava new <name>` downloads the framework and scaffolds a ready-to-run app |
-| `@chavajs/core` | The framework distribution (assembled `src/` + `bin/` + the starter `template/`) |
-| `@chavajs/cli` | The console CLI (Artisan equivalent), standalone |
+| `@chavajs/core`      | The framework distribution (assembled `src/` + `bin/` + the starter `template/`)                               |
+| `@chavajs/cli`       | The console CLI (Artisan equivalent), standalone                                                               |
 
 `examples/starter/` is the canonical reference application. Start a new app
 with [`chava new`](#create-an-app-chava-new) — a real app has the framework
@@ -211,13 +211,13 @@ Then it installs dependencies and assembles the framework into the new app's
 
 Flags:
 
-| Flag | Purpose |
-| --- | --- |
-| `--database=postgres` | Skip the prompt; pick the DB engine (`sqlite`, `postgres`, `mysql`) |
-| `--auth` / `--no-auth` | Skip the prompt; scaffold (or omit) the auth UI |
-| `--docs` / `--no-docs` | Skip the prompt; include (or omit) the framework docs at `/docs` |
-| `--package-manager=pnpm` | Skip the prompt; pick the package manager |
-| `--skip-install` | Scaffold files only, don't run the package manager |
+| Flag                     | Purpose                                                             |
+| ------------------------ | ------------------------------------------------------------------- |
+| `--database=postgres`    | Skip the prompt; pick the DB engine (`sqlite`, `postgres`, `mysql`) |
+| `--auth` / `--no-auth`   | Skip the prompt; scaffold (or omit) the auth UI                     |
+| `--docs` / `--no-docs`   | Skip the prompt; include (or omit) the framework docs at `/docs`    |
+| `--package-manager=pnpm` | Skip the prompt; pick the package manager                           |
+| `--skip-install`         | Scaffold files only, don't run the package manager                  |
 
 Running the installer from a checkout of this repo (no global install):
 
@@ -313,7 +313,7 @@ the app's own `bin/chava.js`. Inside an app it works bare after `npm i -g
 **:8080** and the Vite dev server on **:5173**. If 8080 is already taken the
 app server **auto-moves to the next free port** (8081, 8082, …) and prints
 where it landed; Vite does the same from 5173. The Inertia HTML shell always
-points at the *actual* Vite port.
+points at the _actual_ Vite port.
 
 To run the two processes separately:
 
@@ -328,66 +328,66 @@ npm run vite                   # Vite dev server (if not auto-started)
 the matching `config/*.ts` file, so a fresh app works with **zero** `.env`
 entries — but this is what you can set:
 
-| Variable | Default | Used by |
-| --- | --- | --- |
-| `APP_NAME` | `chavaJs` | `config/app.ts` → page titles, `app.name` shared prop |
-| `APP_ENV` | `production` | `config/app.ts` → `app.environment()` |
-| `APP_DEBUG` | `false` | `config/app.ts` → error verbosity |
-| `APP_URL` | `http://localhost:8080` | `config/app.ts` → absolute URL building |
-| `APP_KEY` | `''` | `config/app.ts` → cookie/encryption keys |
-| `DB_CONNECTION` | `sqlite` | `config/database.ts` |
-| `DB_DATABASE` | `database/database.sqlite` (sqlite) / `chava` | `config/database.ts` |
-| `DB_HOST` | `127.0.0.1` | `config/database.ts` (pg/mysql) |
-| `DB_PORT` | `5432` (pg) / `3306` (mysql) | `config/database.ts` |
-| `DB_USERNAME` | `postgres` / `root` | `config/database.ts` |
-| `DB_PASSWORD` | `''` | `config/database.ts` |
-| `DB_SSL` | `false` | `config/database.ts` |
-| `SESSION_DRIVER` | `file` | `config/session.ts` (`file` or `array`) |
-| `SESSION_FILES` | `storage/framework/sessions` | `config/session.ts` |
-| `SESSION_COOKIE` | `chava_session` | `config/session.ts` |
-| `SESSION_LIFETIME` | `120` (minutes) | `config/session.ts` |
-| `SESSION_HTTP_ONLY` | `true` | `config/session.ts` |
-| `SESSION_SECURE` | `false` | `config/session.ts` |
-| `SESSION_SAME_SITE` | `lax` | `config/session.ts` |
-| `QUEUE_CONNECTION` | `sync` | `config/queue.ts` |
-| `REDIS_HOST` | `127.0.0.1` | `config/queue.ts` (redis driver) |
-| `REDIS_PORT` | `6379` | `config/queue.ts` (redis driver) |
-| `MAIL_MAILER` | `log` | `config/mail.ts` |
-| `MAIL_LOG_PATH` | `storage/logs/chava-mail.log` | `config/mail.ts` (log driver) |
-| `MAIL_FROM_ADDRESS` | `hello@chava.dev` | `config/mail.ts` |
-| `MAIL_FROM_NAME` | `chavaJs` | `config/mail.ts` |
-| `MAIL_HOST` | `smtp.example.com` | `config/mail.ts` (smtp) |
-| `MAIL_PORT` | `587` | `config/mail.ts` (smtp) |
-| `MAIL_ENCRYPTION_TLS` | `false` | `config/mail.ts` (smtp) |
-| `MAIL_USERNAME` | `''` | `config/mail.ts` (smtp) |
-| `MAIL_PASSWORD` | `''` | `config/mail.ts` (smtp) |
-| `VITE_URL` | `http://localhost:5173` | `config/frontend.ts` |
-| `VITE_PORT` | `5173` | `config/frontend.ts` |
+| Variable              | Default                                       | Used by                                               |
+| --------------------- | --------------------------------------------- | ----------------------------------------------------- |
+| `APP_NAME`            | `chavaJs`                                     | `config/app.ts` → page titles, `app.name` shared prop |
+| `APP_ENV`             | `production`                                  | `config/app.ts` → `app.environment()`                 |
+| `APP_DEBUG`           | `false`                                       | `config/app.ts` → error verbosity                     |
+| `APP_URL`             | `http://localhost:8080`                       | `config/app.ts` → absolute URL building               |
+| `APP_KEY`             | `''`                                          | `config/app.ts` → cookie/encryption keys              |
+| `DB_CONNECTION`       | `sqlite`                                      | `config/database.ts`                                  |
+| `DB_DATABASE`         | `database/database.sqlite` (sqlite) / `chava` | `config/database.ts`                                  |
+| `DB_HOST`             | `127.0.0.1`                                   | `config/database.ts` (pg/mysql)                       |
+| `DB_PORT`             | `5432` (pg) / `3306` (mysql)                  | `config/database.ts`                                  |
+| `DB_USERNAME`         | `postgres` / `root`                           | `config/database.ts`                                  |
+| `DB_PASSWORD`         | `''`                                          | `config/database.ts`                                  |
+| `DB_SSL`              | `false`                                       | `config/database.ts`                                  |
+| `SESSION_DRIVER`      | `file`                                        | `config/session.ts` (`file` or `array`)               |
+| `SESSION_FILES`       | `storage/framework/sessions`                  | `config/session.ts`                                   |
+| `SESSION_COOKIE`      | `chava_session`                               | `config/session.ts`                                   |
+| `SESSION_LIFETIME`    | `120` (minutes)                               | `config/session.ts`                                   |
+| `SESSION_HTTP_ONLY`   | `true`                                        | `config/session.ts`                                   |
+| `SESSION_SECURE`      | `false`                                       | `config/session.ts`                                   |
+| `SESSION_SAME_SITE`   | `lax`                                         | `config/session.ts`                                   |
+| `QUEUE_CONNECTION`    | `sync`                                        | `config/queue.ts`                                     |
+| `REDIS_HOST`          | `127.0.0.1`                                   | `config/queue.ts` (redis driver)                      |
+| `REDIS_PORT`          | `6379`                                        | `config/queue.ts` (redis driver)                      |
+| `MAIL_MAILER`         | `log`                                         | `config/mail.ts`                                      |
+| `MAIL_LOG_PATH`       | `storage/logs/chava-mail.log`                 | `config/mail.ts` (log driver)                         |
+| `MAIL_FROM_ADDRESS`   | `hello@chava.dev`                             | `config/mail.ts`                                      |
+| `MAIL_FROM_NAME`      | `chavaJs`                                     | `config/mail.ts`                                      |
+| `MAIL_HOST`           | `smtp.example.com`                            | `config/mail.ts` (smtp)                               |
+| `MAIL_PORT`           | `587`                                         | `config/mail.ts` (smtp)                               |
+| `MAIL_ENCRYPTION_TLS` | `false`                                       | `config/mail.ts` (smtp)                               |
+| `MAIL_USERNAME`       | `''`                                          | `config/mail.ts` (smtp)                               |
+| `MAIL_PASSWORD`       | `''`                                          | `config/mail.ts` (smtp)                               |
+| `VITE_URL`            | `http://localhost:5173`                       | `config/frontend.ts`                                  |
+| `VITE_PORT`           | `5173`                                        | `config/frontend.ts`                                  |
 
-`Env` is the Laravel `env()` equivalent and is used *inside* the config files:
+`Env` is the Laravel `env()` equivalent and is used _inside_ the config files:
 
 ```ts
 // config/app.ts
-import { Env } from '../src/config/Env';
+import { Env } from "../src/config/Env";
 
 export default {
-  name: Env.get('APP_NAME', 'chavaJs'),
-  env: Env.get('APP_ENV', 'production'),
-  debug: Env.bool('APP_DEBUG', false),
-  url: Env.get('APP_URL', 'http://localhost:8080'),
-  key: Env.get('APP_KEY', ''),
-  timezone: 'UTC',
+  name: Env.get("APP_NAME", "chavaJs"),
+  env: Env.get("APP_ENV", "production"),
+  debug: Env.bool("APP_DEBUG", false),
+  url: Env.get("APP_URL", "http://localhost:8080"),
+  key: Env.get("APP_KEY", ""),
+  timezone: "UTC",
 };
 ```
 
 Read any value at runtime with the `Config` facade:
 
 ```ts
-import { Config } from '../src/facades';
-Config.get('app.name');                    // 'chavaJs'
-Config.get('database.default');            // 'sqlite'
-Config.get('mail.default');                // 'log'
-Config.get('nope', 'fallback');            // 'fallback'
+import { Config } from "../src/facades";
+Config.get("app.name"); // 'chavaJs'
+Config.get("database.default"); // 'sqlite'
+Config.get("mail.default"); // 'log'
+Config.get("nope", "fallback"); // 'fallback'
 ```
 
 ### `config/*.ts` reference
@@ -401,11 +401,14 @@ driver:
 
 ```ts
 export default {
-  default: Env.get('DB_CONNECTION', 'sqlite'),
+  default: Env.get("DB_CONNECTION", "sqlite"),
   connections: {
-    sqlite: { driver: 'sqlite', database: Env.get('DB_DATABASE', 'database/database.sqlite') },
-    pg:     { driver: 'pg',     host, port, database, username, password, ssl },
-    mysql:  { driver: 'mysql',  host, port, database, username, password, ssl },
+    sqlite: {
+      driver: "sqlite",
+      database: Env.get("DB_DATABASE", "database/database.sqlite"),
+    },
+    pg: { driver: "pg", host, port, database, username, password, ssl },
+    mysql: { driver: "mysql", host, port, database, username, password, ssl },
   },
 };
 ```
@@ -417,18 +420,18 @@ in tests.
 
 ```ts
 export default {
-  defaults: { guard: 'web' },
+  defaults: { guard: "web" },
   guards: {
-    web: { driver: 'session', provider: 'users' },
+    web: { driver: "session", provider: "users" },
     api: {
-      driver: 'token',
-      provider: 'users',
+      driver: "token",
+      provider: "users",
       token_model: PersonalAccessToken,
-      user_relation: 'user',
+      user_relation: "user",
     },
   },
-  providers: { users: { driver: 'eloquent', model: User } },
-  password_timeout: 10800,   // seconds a password stays valid in the session
+  providers: { users: { driver: "eloquent", model: User } },
+  password_timeout: 10800, // seconds a password stays valid in the session
 };
 ```
 
@@ -487,15 +490,15 @@ npm run assemble        # re-merge packages/* into the reference app after edits
 middleware groups and register service providers.
 
 ```ts
-import { AppServiceProvider } from '../app/Providers/AppServiceProvider';
-import { RouteServiceProvider } from '../app/Providers/RouteServiceProvider';
-import { Application } from '../src/foundation/Application';
-import { HandleInertiaRequests } from '../src/inertia/HandleInertiaRequests';
-import { StartSession } from '../src/http/middleware/StartSession';
-import { VerifyCsrfToken } from '../src/http/middleware/VerifyCsrfToken';
+import { AppServiceProvider } from "../app/Providers/AppServiceProvider";
+import { RouteServiceProvider } from "../app/Providers/RouteServiceProvider";
+import { Application } from "../src/foundation/Application";
+import { HandleInertiaRequests } from "../src/inertia/HandleInertiaRequests";
+import { StartSession } from "../src/http/middleware/StartSession";
+import { VerifyCsrfToken } from "../src/http/middleware/VerifyCsrfToken";
 
 export const app = Application.configure({
-  name: 'chavaJs',
+  name: "chavaJs",
   providers: [AppServiceProvider, RouteServiceProvider],
   globalMiddleware: [],
   webMiddleware: [StartSession, HandleInertiaRequests, VerifyCsrfToken],
@@ -515,38 +518,43 @@ verbs are `get`, `post`, `put`, `patch`, `delete`, and `match`:
 
 ```ts
 // routes/web.ts
-import { Route } from '../src/facades';
-import { HomeController } from '../app/Http/Controllers/HomeController';
+import { Route } from "../src/facades";
+import { HomeController } from "../app/Http/Controllers/HomeController";
 
-Route.get('/', [HomeController, 'index']).name('home');
-Route.post('/users', [UserController, 'store']).name('users.store');
-Route.put('/users/{user}', [UserController, 'update']).name('users.update');
-Route.patch('/users/{user}', [UserController, 'update']);
-Route.delete('/users/{user}', [UserController, 'destroy']).name('users.destroy');
-Route.match(['GET', 'POST'], '/anything', [AnythingController, 'handle']);
+Route.get("/", [HomeController, "index"]).name("home");
+Route.post("/users", [UserController, "store"]).name("users.store");
+Route.put("/users/{user}", [UserController, "update"]).name("users.update");
+Route.patch("/users/{user}", [UserController, "update"]);
+Route.delete("/users/{user}", [UserController, "destroy"]).name(
+  "users.destroy",
+);
+Route.match(["GET", "POST"], "/anything", [AnythingController, "handle"]);
 ```
 
 **Route parameters** — required `{id}` and optional `{id?}`:
 
 ```ts
-Route.get('/posts/{post}', [PostController, 'show']);   // /posts/123
-Route.get('/users/{id?}', [UserController, 'index']);   // /users and /users/5
+Route.get("/posts/{post}", [PostController, "show"]); // /posts/123
+Route.get("/users/{id?}", [UserController, "index"]); // /users and /users/5
 ```
 
 **Named routes** — `.name('users.show')`; group prefixes automatically
 prepend group names.
 
-**Groups, prefixes & middleware** — fluent chains return a *registrar* that
+**Groups, prefixes & middleware** — fluent chains return a _registrar_ that
 snapshots the attributes; nothing leaks into the router's global state:
 
 ```ts
-Route.middleware('auth').prefix('admin').name('admin.').group(() => {
-  Route.get('/dashboard', [AdminController, 'index']);   // GET /admin/dashboard, name admin.dashboard
-  Route.resource('users', AdminUserController);
-});
+Route.middleware("auth")
+  .prefix("admin")
+  .name("admin.")
+  .group(() => {
+    Route.get("/dashboard", [AdminController, "index"]); // GET /admin/dashboard, name admin.dashboard
+    Route.resource("users", AdminUserController);
+  });
 
-Route.group({ prefix: 'api', middleware: 'api' }, () => {
-  Route.get('/ping', [ApiController, 'ping']);
+Route.group({ prefix: "api", middleware: "api" }, () => {
+  Route.get("/ping", [ApiController, "ping"]);
 });
 ```
 
@@ -555,16 +563,16 @@ RESTful routes (`index/create/store/show/edit/update/destroy`) with Laravel's
 exact URI conventions — plural collection paths, singular route-model params:
 
 ```ts
-Route.resource('posts', PostController);                       // POST /posts, GET /posts/{post}/edit, …
-Route.resource('posts', PostController, { only: ['index', 'show'] });
-Route.resource('posts', PostController, { except: ['destroy'] });
-Route.resource('posts', PostController, { names: { index: 'posts.all' } });
+Route.resource("posts", PostController); // POST /posts, GET /posts/{post}/edit, …
+Route.resource("posts", PostController, { only: ["index", "show"] });
+Route.resource("posts", PostController, { except: ["destroy"] });
+Route.resource("posts", PostController, { names: { index: "posts.all" } });
 ```
 
 **Route constraints** — `.where()` applies a regex to a param:
 
 ```ts
-Route.get('/users/{id}', [UserController, 'show']).where({ id: '[0-9]+' });
+Route.get("/users/{id}", [UserController, "show"]).where({ id: "[0-9]+" });
 ```
 
 **Route model binding** — declare the param type as a Model class in the
@@ -579,7 +587,7 @@ public async show(request: Request, post: Post) { … }
 chavaJs calls `__invoke()`:
 
 ```ts
-Route.get('/report', DownloadReportController);
+Route.get("/report", DownloadReportController);
 // class DownloadReportController { public async __invoke() { … } }
 ```
 
@@ -600,20 +608,20 @@ referenced as `[ControllerClass, 'methodName']` — Laravel's
 constructor injection is automatic:
 
 ```ts
-import { Inertia } from '../../src/facades';
-import { PostRepository } from '../../app/Services/PostRepository';
+import { Inertia } from "../../src/facades";
+import { PostRepository } from "../../app/Services/PostRepository";
 
 export class PostController {
   public constructor(private readonly posts: PostRepository) {}
 
   public async index(request: Request) {
     const posts = await this.posts.latest();
-    return Inertia.render('Posts/Index', { posts });
+    return Inertia.render("Posts/Index", { posts });
   }
 }
 ```
 
-Method arguments are injected *by type*: `Request` (or any subclass) receives
+Method arguments are injected _by type_: `Request` (or any subclass) receives
 the current request, a Model class receives the bound route model, and
 anything else is resolved from the container.
 
@@ -624,15 +632,15 @@ returns a `Response`; the middleware may inspect/change the request, short-circu
 with its own `Response`, or forward and transform the response:
 
 ```ts
-import type { Request } from '../../../src/http/Request';
-import type { Response } from '../../../src/http/Response';
-import type { NextFunction } from '../../../src/http/types';
+import type { Request } from "../../../src/http/Request";
+import type { Response } from "../../../src/http/Response";
+import type { NextFunction } from "../../../src/http/types";
 
 export class EnsureAdmin {
   public async handle(request: Request, next: NextFunction): Promise<Response> {
     const user = await request.user();
-    if (!user || user.getAttribute('is_admin') !== true) {
-      return Response.redirect('/');
+    if (!user || user.getAttribute("is_admin") !== true) {
+      return Response.redirect("/");
     }
     return next();
   }
@@ -644,21 +652,21 @@ Groups are declared in `bootstrap/app.ts`: `globalMiddleware` (every route),
 Per-route middleware uses the same group names or an explicit class:
 
 ```ts
-Route.get('/dashboard', [DashboardController, 'index']).middleware('auth');
-Route.post('/users', [UserController, 'store']).middleware('can:create,users');
-Route.get('/webhooks', [WebhookController, 'index']).middleware(EnsureAdmin);
+Route.get("/dashboard", [DashboardController, "index"]).middleware("auth");
+Route.post("/users", [UserController, "store"]).middleware("can:create,users");
+Route.get("/webhooks", [WebhookController, "index"]).middleware(EnsureAdmin);
 ```
 
 **Built-in middleware:**
 
-| Middleware | Purpose |
-| --- | --- |
-| `auth` | Require a logged-in user; redirect to `/login` otherwise |
-| `guest` | Only allow guests (redirects authenticated users to `/dashboard`) |
-| `verified` | Require a verified email (`email_verified_at` set) |
-| `can:<ability>,<model>` | Route through the Gate (Laravel's `can:` middleware) |
-| `session` | Start the session (member of the `web` group) |
-| `csrf` | Verify the CSRF token (member of the `web` group) |
+| Middleware              | Purpose                                                           |
+| ----------------------- | ----------------------------------------------------------------- |
+| `auth`                  | Require a logged-in user; redirect to `/login` otherwise          |
+| `guest`                 | Only allow guests (redirects authenticated users to `/dashboard`) |
+| `verified`              | Require a verified email (`email_verified_at` set)                |
+| `can:<ability>,<model>` | Route through the Gate (Laravel's `can:` middleware)              |
+| `session`               | Start the session (member of the `web` group)                     |
+| `csrf`                  | Verify the CSRF token (member of the `web` group)                 |
 
 Generate a new middleware with `chava make:middleware EnsureAdmin`.
 
@@ -667,21 +675,21 @@ Generate a new middleware with `chava make:middleware EnsureAdmin`.
 The `Request` is a typed wrapper around the Node `IncomingMessage`:
 
 ```ts
-import { Request } from '../../src/http/Request';
+import { Request } from "../../src/http/Request";
 
 export class UserController {
   public async store(request: Request) {
-    request.input('name');            // form/JSON body value
-    request.input('name', 'default'); // with a fallback
-    request.query('page', 1);         // querystring value
-    request.only(['name', 'email']);  // subset of the input
-    request.except(['password']);     // input minus keys
-    request.json();                   // the parsed JSON body (object)
-    request.bearerToken();            // the Authorization: Bearer token (or null)
-    request.method();                 // 'GET' | 'POST' | …
-    request.fullUrl();                // scheme + host + path + query
-    request.header('x-inertia');      // a header (case-insensitive)
-    request.isInertia();              // true for X-Inertia requests
+    request.input("name"); // form/JSON body value
+    request.input("name", "default"); // with a fallback
+    request.query("page", 1); // querystring value
+    request.only(["name", "email"]); // subset of the input
+    request.except(["password"]); // input minus keys
+    request.json(); // the parsed JSON body (object)
+    request.bearerToken(); // the Authorization: Bearer token (or null)
+    request.method(); // 'GET' | 'POST' | …
+    request.fullUrl(); // scheme + host + path + query
+    request.header("x-inertia"); // a header (case-insensitive)
+    request.isInertia(); // true for X-Inertia requests
   }
 }
 ```
@@ -689,19 +697,19 @@ export class UserController {
 **Validation on the request** — Laravel's `$request->validate()`:
 
 ```ts
-const data = await request.validate({ name: 'required|max:255' });   // throws on failure
-const data = await request.validated();                              // from a FormRequest param
+const data = await request.validate({ name: "required|max:255" }); // throws on failure
+const data = await request.validated(); // from a FormRequest param
 ```
 
 **Auth & session helpers**:
 
 ```ts
-const user = await request.user();   // the authenticated Model (or null)
-await request.session();             // the SessionStore for this request
-request.flash('status', 'Saved!');   // flash to the *next* request
-request.old('email');                // previously submitted input
-request.back();                      // → Response.redirect to the previous URL
-request.redirect('/dashboard');      // → Response.redirect
+const user = await request.user(); // the authenticated Model (or null)
+await request.session(); // the SessionStore for this request
+request.flash("status", "Saved!"); // flash to the *next* request
+request.old("email"); // previously submitted input
+request.back(); // → Response.redirect to the previous URL
+request.redirect("/dashboard"); // → Response.redirect
 ```
 
 Controller signature injection makes Form Requests feel like Laravel:
@@ -721,16 +729,22 @@ Controllers return a `Response` (or a plain value the kernel wraps — an
 object becomes JSON, a string becomes HTML):
 
 ```ts
-Response.json({ ok: true });              // 200 application/json
-Response.json(data, 201);                 // custom status
-Response.html('<h1>Hi</h1>');             // 200 text/html
-Response.redirect('/dashboard');          // 302 Location
-Response.redirect('/login', 301);         // custom status
-Response.noContent();                     // 204
+Response.json({ ok: true }); // 200 application/json
+Response.json(data, 201); // custom status
+Response.html("<h1>Hi</h1>"); // 200 text/html
+Response.redirect("/dashboard"); // 302 Location
+Response.redirect("/login", 301); // custom status
+Response.noContent(); // 204
 
-new Response().status(418).header('x-who', 'teapot')
-  .cookie('theme', 'dark', { httpOnly: true, maxAge: 60 * 60 * 24, sameSite: 'lax' })
-  .send('body');
+new Response()
+  .status(418)
+  .header("x-who", "teapot")
+  .cookie("theme", "dark", {
+    httpOnly: true,
+    maxAge: 60 * 60 * 24,
+    sameSite: "lax",
+  })
+  .send("body");
 ```
 
 The `Response` class mirrors `Illuminate\Http\Response`: `status`,
@@ -744,37 +758,37 @@ protocol (see [Phase 5](#phase-5--frontend-inertia--react)).
 The `Validator` is a port of Laravel's validator:
 
 ```ts
-import { Validator } from '../../src/validation/Validator';
+import { Validator } from "../../src/validation/Validator";
 
 const validator = Validator.make(
-  { email: 'foo', age: '17' },
-  { email: 'required|email|max:255', age: 'required|integer|min:18' },
+  { email: "foo", age: "17" },
+  { email: "required|email|max:255", age: "required|integer|min:18" },
 );
 
-validator.passes();          // false
-validator.fails();           // true
-validator.errors();          // { email: ['The email field must be a valid email address.'], … }
-validator.validate();        // throws ValidationException on failure, returns data
+validator.passes(); // false
+validator.fails(); // true
+validator.errors(); // { email: ['The email field must be a valid email address.'], … }
+validator.validate(); // throws ValidationException on failure, returns data
 ```
 
 Rules are pipe-delimited strings; `:param` values come after a colon:
 
-| Rule | Example |
-| --- | --- |
-| `required` | `required` |
-| `email` | `email` |
-| `min` / `max` | `min:18`, `max:255`, `min:1` (arrays) |
-| `integer` / `numeric` | `integer`, `numeric` |
-| `string` / `boolean` | `string`, `boolean` |
-| `confirmed` | `confirmed` (checks `field` == `field_confirmation`) |
-| `unique` | `unique:users,email` |
-| `exists` | `exists:users,id` |
-| `regex` | `regex:/^[a-z]+$/` |
-| `in` / `not_in` | `in:red,blue`, `not_in:pending` |
-| `date` / `after` / `before` | `date`, `after:today` |
-| `array` / `object` | `array`, `object` |
-| `url` / `uuid` | `url`, `uuid` |
-| `same` / `different` | `same:other_field` |
+| Rule                        | Example                                              |
+| --------------------------- | ---------------------------------------------------- |
+| `required`                  | `required`                                           |
+| `email`                     | `email`                                              |
+| `min` / `max`               | `min:18`, `max:255`, `min:1` (arrays)                |
+| `integer` / `numeric`       | `integer`, `numeric`                                 |
+| `string` / `boolean`        | `string`, `boolean`                                  |
+| `confirmed`                 | `confirmed` (checks `field` == `field_confirmation`) |
+| `unique`                    | `unique:users,email`                                 |
+| `exists`                    | `exists:users,id`                                    |
+| `regex`                     | `regex:/^[a-z]+$/`                                   |
+| `in` / `not_in`             | `in:red,blue`, `not_in:pending`                      |
+| `date` / `after` / `before` | `date`, `after:today`                                |
+| `array` / `object`          | `array`, `object`                                    |
+| `url` / `uuid`              | `url`, `uuid`                                        |
+| `same` / `different`        | `same:other_field`                                   |
 
 **Custom rules** — a function `(value) => boolean | string` (returning a
 string yields a custom error message):
@@ -782,31 +796,37 @@ string yields a custom error message):
 ```ts
 Validator.make(data, {
   handle: (v: unknown) =>
-    typeof v === 'string' && /^[a-z][a-z0-9_]*$/.test(v) ? true : 'The handle must be a valid slug.',
+    typeof v === "string" && /^[a-z][a-z0-9_]*$/.test(v)
+      ? true
+      : "The handle must be a valid slug.",
 });
 ```
 
 **Custom messages** — a second options object:
 
 ```ts
-Validator.make(data, { email: 'required|email' }, {
-  'email.required': 'Please enter your email address.',
-  'email.email': 'That is not a valid email.',
-});
+Validator.make(
+  data,
+  { email: "required|email" },
+  {
+    "email.required": "Please enter your email address.",
+    "email.email": "That is not a valid email.",
+  },
+);
 ```
 
 **Form Request classes** — Laravel's `FormRequest`:
 
 ```ts
 // app/Http/Requests/LoginRequest.ts
-import { FormRequest } from '../../src/validation/FormRequest';
+import { FormRequest } from "../../src/validation/FormRequest";
 
 export class LoginRequest extends FormRequest {
   public rules() {
-    return { email: 'required|email', password: 'required' };
+    return { email: "required|email", password: "required" };
   }
   public messages() {
-    return { 'email.required': 'Please enter your email address.' };
+    return { "email.required": "Please enter your email address." };
   }
 }
 ```
@@ -826,25 +846,25 @@ session id; data lives server-side (`file` driver → `storage/framework/session
 ```ts
 const store = request.session();
 
-store.put('cart', [1, 2, 3]);
-store.get('cart');               // [1, 2, 3]
-store.push('cart', 4);
-store.pull('key');               // get + forget
-store.forget('key');             // delete one
-store.flush();                   // clear everything
-store.has('key');                // boolean
+store.put("cart", [1, 2, 3]);
+store.get("cart"); // [1, 2, 3]
+store.push("cart", 4);
+store.pull("key"); // get + forget
+store.forget("key"); // delete one
+store.flush(); // clear everything
+store.has("key"); // boolean
 
-store.flash('status', 'Saved!'); // available for the NEXT request only
-store.now('status', 'Fresh');    // available for THIS request only
-store.reflash();                 // keep flash data one more request
-store.keep(['status']);          // keep specific keys
+store.flash("status", "Saved!"); // available for the NEXT request only
+store.now("status", "Fresh"); // available for THIS request only
+store.reflash(); // keep flash data one more request
+store.keep(["status"]); // keep specific keys
 
-store.old('email');              // previously submitted input
-store.flashInput(request.only('email'));
-store.previousUrl();             // the previous request URL
-store.token();                   // the CSRF token (generated lazily)
-store.regenerate();              // new session id (login/logout do this)
-store.migrate();                 // regenerate id + CSRF token (anti-fixation)
+store.old("email"); // previously submitted input
+store.flashInput(request.only("email"));
+store.previousUrl(); // the previous request URL
+store.token(); // the CSRF token (generated lazily)
+store.regenerate(); // new session id (login/logout do this)
+store.migrate(); // regenerate id + CSRF token (anti-fixation)
 ```
 
 **CSRF** follows Laravel exactly: the `XSRF-TOKEN` cookie is set by
@@ -866,10 +886,10 @@ SQLite is the default (zero setup); Postgres and MySQL use the `pg` and
 `mysql2` drivers behind the scenes:
 
 ```ts
-import { DB } from '../src/facades';
+import { DB } from "../src/facades";
 
-await DB.table('users').where('is_admin', 1).get();   // default connection
-await DB.connection('mysql').table('users').get();    // named connection
+await DB.table("users").where("is_admin", 1).get(); // default connection
+await DB.connection("mysql").table("users").get(); // named connection
 ```
 
 ### Migrations & the Blueprint
@@ -879,23 +899,23 @@ Migrations live in `database/migrations/` as timestamped files exporting
 
 ```ts
 // database/migrations/2026_01_01_000000_create_users_table.ts
-import { Schema } from '../../src/facades';
+import { Schema } from "../../src/facades";
 
 export async function up(): Promise<void> {
-  await Schema.create('users', (table) => {
+  await Schema.create("users", (table) => {
     table.id();
-    table.string('name');
-    table.string('email').unique();
-    table.string('password');
-    table.boolean('is_admin').default(false);
-    table.timestamp('email_verified_at').nullable();
+    table.string("name");
+    table.string("email").unique();
+    table.string("password");
+    table.boolean("is_admin").default(false);
+    table.timestamp("email_verified_at").nullable();
     table.timestamps();
     table.softDeletes();
   });
 }
 
 export async function down(): Promise<void> {
-  await Schema.dropIfExists('users');
+  await Schema.dropIfExists("users");
 }
 ```
 
@@ -904,27 +924,27 @@ Run them with `chava migrate` (or `migrate:fresh` to wipe + rerun,
 
 **Column types** (`table.*`):
 
-| Method | Notes |
-| --- | --- |
-| `id()` | `bigIncrements('id')` — auto-incrementing primary key |
-| `increments(name)` / `bigIncrements(name)` | auto-increment PK |
-| `string(name, length = 255)` | varchar |
-| `text(name)` | long text |
-| `integer(name)` / `tinyInteger(name)` | integer |
-| `bigInteger(name)` | bigint |
-| `float(name)` / `double(name)` | floating point |
-| `decimal(name, total = 8, places = 2)` | fixed-point |
-| `boolean(name)` | boolean |
-| `date(name)` / `dateTime(name)` / `time(name)` | temporal |
-| `timestamp(name)` | nullable timestamp |
-| `timestamps()` | `created_at` + `updated_at` |
-| `softDeletes(column = 'deleted_at')` | nullable deleted-at |
-| `rememberToken()` | `remember_token` varchar(100) nullable |
-| `json(name)` / `jsonb(name)` | JSON storage |
-| `uuid(name)` | UUID |
-| `binary(name)` | BLOB |
-| `enum(name, values)` | checked enum |
-| `foreignId(name)` | unsigned bigint for foreign keys |
+| Method                                         | Notes                                                 |
+| ---------------------------------------------- | ----------------------------------------------------- |
+| `id()`                                         | `bigIncrements('id')` — auto-incrementing primary key |
+| `increments(name)` / `bigIncrements(name)`     | auto-increment PK                                     |
+| `string(name, length = 255)`                   | varchar                                               |
+| `text(name)`                                   | long text                                             |
+| `integer(name)` / `tinyInteger(name)`          | integer                                               |
+| `bigInteger(name)`                             | bigint                                                |
+| `float(name)` / `double(name)`                 | floating point                                        |
+| `decimal(name, total = 8, places = 2)`         | fixed-point                                           |
+| `boolean(name)`                                | boolean                                               |
+| `date(name)` / `dateTime(name)` / `time(name)` | temporal                                              |
+| `timestamp(name)`                              | nullable timestamp                                    |
+| `timestamps()`                                 | `created_at` + `updated_at`                           |
+| `softDeletes(column = 'deleted_at')`           | nullable deleted-at                                   |
+| `rememberToken()`                              | `remember_token` varchar(100) nullable                |
+| `json(name)` / `jsonb(name)`                   | JSON storage                                          |
+| `uuid(name)`                                   | UUID                                                  |
+| `binary(name)`                                 | BLOB                                                  |
+| `enum(name, values)`                           | checked enum                                          |
+| `foreignId(name)`                              | unsigned bigint for foreign keys                      |
 
 **Modifiers** (chain onto a column): `.nullable()`, `.default(value)`,
 `.unsigned()`, `.primary()`, `.unique(name?)`, `.index(name?)`,
@@ -939,27 +959,27 @@ Example — a full relational schema from the template:
 
 ```ts
 // personal_access_tokens
-await Schema.create('personal_access_tokens', (table) => {
+await Schema.create("personal_access_tokens", (table) => {
   table.id();
-  table.foreignId('user_id').constrained('users').index();
-  table.string('name');
-  table.string('token', 64).unique();
-  table.json('abilities');
-  table.timestamp('last_used_at').nullable();
-  table.timestamp('expires_at').nullable();
+  table.foreignId("user_id").constrained("users").index();
+  table.string("name");
+  table.string("token", 64).unique();
+  table.json("abilities");
+  table.timestamp("last_used_at").nullable();
+  table.timestamp("expires_at").nullable();
   table.timestamps();
 });
 
 // notifications (morph-related to the notifiable)
-await Schema.create('notifications', (table) => {
-  table.uuid('id').primary();
-  table.string('type');
-  table.string('notifiable_type');
-  table.bigInteger('notifiable_id').unsigned();
-  table.text('data');
-  table.timestamp('read_at').nullable();
+await Schema.create("notifications", (table) => {
+  table.uuid("id").primary();
+  table.string("type");
+  table.string("notifiable_type");
+  table.bigInteger("notifiable_id").unsigned();
+  table.text("data");
+  table.timestamp("read_at").nullable();
   table.timestamps();
-  table.index(['notifiable_type', 'notifiable_id']);
+  table.index(["notifiable_type", "notifiable_id"]);
 });
 ```
 
@@ -969,11 +989,11 @@ Models extend `Model` (Eloquent's `Illuminate\Database\Eloquent\Model`):
 
 ```ts
 // app/Models/Post.ts
-import { Model } from '../../src/orm/Model';
-import { User } from './User';
+import { Model } from "../../src/orm/Model";
+import { User } from "./User";
 
 export class Post extends Model {
-  public static fillable = ['user_id', 'title', 'body'];
+  public static fillable = ["user_id", "title", "body"];
 
   public user() {
     return this.belongsTo(User);
@@ -984,27 +1004,27 @@ export class Post extends Model {
 **Static (query) API:**
 
 ```ts
-await Post.find(1);                    // instance or null
-await Post.findOrFail(1);              // throws when missing
-await Post.create({ title: 'Hi', body: '…' });
-await Post.query().where('user_id', 1).get();
-Post.with('user');                     // eager-load builder
-await Post.latest().paginate(15);      // paginator
+await Post.find(1); // instance or null
+await Post.findOrFail(1); // throws when missing
+await Post.create({ title: "Hi", body: "…" });
+await Post.query().where("user_id", 1).get();
+Post.with("user"); // eager-load builder
+await Post.latest().paginate(15); // paginator
 ```
 
 **Instance API:**
 
 ```ts
 const post = await Post.find(1);
-post.getAttribute('title');            // 'Hi'
-post.setAttribute('title', 'Hello');
-post.title;                            // same as getAttribute (via casts)
-await post.update({ title: 'Hello' });
-await post.delete();                   // soft-deletes when the model has soft deletes
+post.getAttribute("title"); // 'Hi'
+post.setAttribute("title", "Hello");
+post.title; // same as getAttribute (via casts)
+await post.update({ title: "Hello" });
+await post.delete(); // soft-deletes when the model has soft deletes
 await post.save();
-post.toArray();                        // plain object
-post.getKey();                         // the primary key value
-await post.user();                     // relation fetch
+post.toArray(); // plain object
+post.getKey(); // the primary key value
+await post.user(); // relation fetch
 ```
 
 **Fillable / guarded** — `static fillable = [...]` whitelists mass-assignment
@@ -1017,9 +1037,9 @@ and JSON serialization:
 ```ts
 export class User extends Model {
   public static casts = {
-    is_admin: 'boolean',
-    email_verified_at: 'datetime',
-    settings: 'json',
+    is_admin: "boolean",
+    email_verified_at: "datetime",
+    settings: "json",
   };
 }
 ```
@@ -1040,38 +1060,38 @@ returned from `getAttribute` can be plain `get` functions or cast-backed.
 
 ```ts
 await User.query()
-  .where('is_admin', true)
-  .where('age', '>', 21)
-  .orWhere('country', 'US')
-  .orderBy('name')
+  .where("is_admin", true)
+  .where("age", ">", 21)
+  .orWhere("country", "US")
+  .orderBy("name")
   .limit(10)
   .get();
 
-await DB.table('users')
-  .whereIn('id', [1, 2, 3])
-  .whereNull('deleted_at')
-  .pluck('email');
+await DB.table("users")
+  .whereIn("id", [1, 2, 3])
+  .whereNull("deleted_at")
+  .pluck("email");
 
-await Post.query().with('user').latest().paginate(15);
+await Post.query().with("user").latest().paginate(15);
 // { data: Post[], current_page, per_page, total, last_page, … }
 ```
 
-| Method | Purpose |
-| --- | --- |
-| `where(col, op?, val)` | equality / comparison |
-| `orWhere(col, op?, val)` | OR branch |
-| `whereIn(col, values)` / `whereNotIn` | membership |
-| `whereNull(col)` / `whereNotNull` | null checks |
-| `orderBy(col, dir?)` / `latest()` / `oldest()` | ordering |
-| `limit(n)` / `offset(n)` / `take` / `skip` | paging |
-| `count()` / `max(col)` / `min` / `avg` / `sum` | aggregates |
-| `pluck(col)` | column values |
-| `chunk(size, fn)` | process rows in batches |
-| `exists()` | boolean |
-| `join` / `leftJoin` | joins |
-| `upsert(values, keys)` | insert-or-update |
-| `first()` / `firstOrFail()` / `find(id)` / `findOrFail(id)` / `get()` | fetch |
-| `paginate(perPage)` | paginator with links data |
+| Method                                                                | Purpose                   |
+| --------------------------------------------------------------------- | ------------------------- |
+| `where(col, op?, val)`                                                | equality / comparison     |
+| `orWhere(col, op?, val)`                                              | OR branch                 |
+| `whereIn(col, values)` / `whereNotIn`                                 | membership                |
+| `whereNull(col)` / `whereNotNull`                                     | null checks               |
+| `orderBy(col, dir?)` / `latest()` / `oldest()`                        | ordering                  |
+| `limit(n)` / `offset(n)` / `take` / `skip`                            | paging                    |
+| `count()` / `max(col)` / `min` / `avg` / `sum`                        | aggregates                |
+| `pluck(col)`                                                          | column values             |
+| `chunk(size, fn)`                                                     | process rows in batches   |
+| `exists()`                                                            | boolean                   |
+| `join` / `leftJoin`                                                   | joins                     |
+| `upsert(values, keys)`                                                | insert-or-update          |
+| `first()` / `firstOrFail()` / `find(id)` / `findOrFail(id)` / `get()` | fetch                     |
+| `paginate(perPage)`                                                   | paginator with links data |
 
 ### Relationships
 
@@ -1088,13 +1108,13 @@ export class User extends Model {
     return this.hasOne(Profile);
   }
   public roles() {
-    return this.belongsToMany(Role);       // pivot table roles_users
+    return this.belongsToMany(Role); // pivot table roles_users
   }
 }
 
-const user = await User.with('posts', 'roles').find(1);
-user.posts;                    // the eager-loaded collection
-await user.posts();            // fresh query
+const user = await User.with("posts", "roles").find(1);
+user.posts; // the eager-loaded collection
+await user.posts(); // fresh query
 ```
 
 Supported relations: `hasOne`, `hasMany`, `belongsTo`, `belongsToMany`,
@@ -1108,9 +1128,9 @@ users in a single query.
 
 ```ts
 // database/factories/UserFactory.ts
-import { faker } from '@faker-js/faker';
-import { Factory } from '../../src/orm/Factory';
-import { User } from '../../app/Models/User';
+import { faker } from "@faker-js/faker";
+import { Factory } from "../../src/orm/Factory";
+import { User } from "../../app/Models/User";
 
 export class UserFactory extends Factory<User> {
   protected model = User;
@@ -1119,7 +1139,7 @@ export class UserFactory extends Factory<User> {
     return {
       name: faker.person.fullName(),
       email: faker.internet.email(),
-      password: 'secret',
+      password: "secret",
     };
   }
 }
@@ -1128,7 +1148,7 @@ export class UserFactory extends Factory<User> {
 Usage — Laravel's factory API, ported:
 
 ```ts
-await UserFactory.new().count(10).create();              // ten users
+await UserFactory.new().count(10).create(); // ten users
 await UserFactory.new().state({ is_admin: true }).createOne();
 ```
 
@@ -1166,16 +1186,16 @@ and `chava make:seeder UserSeeder`.
 ### The `Auth` facade
 
 ```ts
-import { Auth } from '../../src/facades';
+import { Auth } from "../../src/facades";
 
-await Auth.user();                  // Model | null (default 'web' guard)
-await Auth.check();                 // boolean
-await Auth.guest();                 // !check()
-await Auth.id();                    // the user id (unknown | null)
-await Auth.attempt({ email, password });   // boolean — session guard
-await Auth.login(user);             // session guard — logs in + session migration
-await Auth.logout();                // clears the session user
-await Auth.guard('api').user();     // switch guard explicitly
+await Auth.user(); // Model | null (default 'web' guard)
+await Auth.check(); // boolean
+await Auth.guest(); // !check()
+await Auth.id(); // the user id (unknown | null)
+await Auth.attempt({ email, password }); // boolean — session guard
+await Auth.login(user); // session guard — logs in + session migration
+await Auth.logout(); // clears the session user
+await Auth.guard("api").user(); // switch guard explicitly
 ```
 
 The same API is available through the current request:
@@ -1189,11 +1209,11 @@ const user = await request.user();
 `Hash` uses **scrypt** from `node:crypto` — no native dependencies:
 
 ```ts
-import { Hash } from '../../src/facades';   // (Hash is also exported by src/facades)
+import { Hash } from "../../src/facades"; // (Hash is also exported by src/facades)
 
-const hash = await Hash.make('secret');
-await Hash.check('secret', hash);   // true
-await Hash.check('nope', hash);     // false
+const hash = await Hash.make("secret");
+await Hash.check("secret", hash); // true
+await Hash.check("nope", hash); // false
 ```
 
 Stored hashes look like `scrypt$<salt>$<derived-hex>`.
@@ -1203,26 +1223,26 @@ Stored hashes look like `scrypt$<salt>$<derived-hex>`.
 `Gate` is Laravel's authorization gate:
 
 ```ts
-import { Gate } from '../../src/facades';
+import { Gate } from "../../src/facades";
 
 // Ability callback: (user, ...args) => boolean
-Gate.define('manage-users', (user) => user?.getAttribute('is_admin') === true);
+Gate.define("manage-users", (user) => user?.getAttribute("is_admin") === true);
 
 // before/after hooks short-circuit the gate (Laravel's Gate::before / after)
-Gate.before((user, ability) => user?.getAttribute('is_superuser') === true);
+Gate.before((user, ability) => user?.getAttribute("is_superuser") === true);
 Gate.after((user, ability, result) => result);
 ```
 
 Checks:
 
 ```ts
-await Gate.allows('manage-users');           // for the current user
-await Gate.denies('manage-users');
-await Gate.any(['view-users', 'manage-users']);
-await Gate.check(['view-users', 'edit-users']);
-await Gate.authorize('delete', post);        // throws 403 when denied
-await Gate.forUser(someUser).allows('x');    // evaluate as another user
-await user.can('delete', post);              // Model::can() — same gate
+await Gate.allows("manage-users"); // for the current user
+await Gate.denies("manage-users");
+await Gate.any(["view-users", "manage-users"]);
+await Gate.check(["view-users", "edit-users"]);
+await Gate.authorize("delete", post); // throws 403 when denied
+await Gate.forUser(someUser).allows("x"); // evaluate as another user
+await user.can("delete", post); // Model::can() — same gate
 ```
 
 **Policies** — map a model to a policy class with `Gate.policy`; methods are
@@ -1230,34 +1250,39 @@ matched by ability name and receive `(user, ...args)`:
 
 ```ts
 // app/Policies/UserPolicy.ts
-import { Policy } from '../../src/auth/Policy';
+import { Policy } from "../../src/auth/Policy";
 
 export class UserPolicy extends Policy {
   public async delete(user: User, target: User) {
-    return user.getAttribute('is_admin') === true || user.getKey() === target.getKey();
+    return (
+      user.getAttribute("is_admin") === true ||
+      user.getKey() === target.getKey()
+    );
   }
 }
 
 // app/Providers/AppServiceProvider.ts
-import { Gate } from '../../src/facades';
+import { Gate } from "../../src/facades";
 Gate.policy(User, UserPolicy);
 ```
 
 ```ts
 // inside a controller
-await request.user().can('delete', otherUser);          // false
-await Gate.authorize('delete', otherUser);              // 403 when denied
-Route.delete('/users/{user}', [UserController, 'destroy']).middleware('can:delete,users');
+await request.user().can("delete", otherUser); // false
+await Gate.authorize("delete", otherUser); // 403 when denied
+Route.delete("/users/{user}", [UserController, "destroy"]).middleware(
+  "can:delete,users",
+);
 ```
 
 ### Auth middleware & email verification
 
-| Middleware | Behavior |
-| --- | --- |
-| `auth` | unauthenticated → redirect to `/login` |
-| `guest` | authenticated → redirect to `/dashboard` |
-| `verified` | requires `email_verified_at`; else redirect to `/dashboard` with a `verify-email` flash |
-| `can:<ability>,<param>` | run the gate; 403 when denied |
+| Middleware              | Behavior                                                                                |
+| ----------------------- | --------------------------------------------------------------------------------------- |
+| `auth`                  | unauthenticated → redirect to `/login`                                                  |
+| `guest`                 | authenticated → redirect to `/dashboard`                                                |
+| `verified`              | requires `email_verified_at`; else redirect to `/dashboard` with a `verify-email` flash |
+| `can:<ability>,<param>` | run the gate; 403 when denied                                                           |
 
 The template's email-verification flow: `email_verified_at` is a nullable
 timestamp; `verified` middleware checks it. The same column powers the shared
@@ -1270,39 +1295,45 @@ A Form Request, a controller, and a policy — the Laravel shape with TS:
 
 ```ts
 // app/Http/Requests/LoginRequest.ts
-import { FormRequest } from '../../src/validation/FormRequest';
+import { FormRequest } from "../../src/validation/FormRequest";
 
 export class LoginRequest extends FormRequest {
   public rules() {
-    return { email: 'required|email', password: 'required' };
+    return { email: "required|email", password: "required" };
   }
   public messages() {
-    return { 'email.required': 'Please enter your email address.' };
+    return { "email.required": "Please enter your email address." };
   }
 }
 ```
 
 ```ts
 // app/Http/Controllers/AuthController.ts
-import { Auth } from '../../src/facades';
-import { LoginRequest } from '../Requests/LoginRequest';
+import { Auth } from "../../src/facades";
+import { LoginRequest } from "../Requests/LoginRequest";
 
 export class AuthController {
   public async login(request: LoginRequest) {
     const data = await request.validated();
-    const ok = await Auth.attempt({ email: data.email, password: data.password });
-    if (!ok) return request.back().withErrors({ email: ['These credentials do not match our records.'] });
-    return request.redirect('/dashboard');
+    const ok = await Auth.attempt({
+      email: data.email,
+      password: data.password,
+    });
+    if (!ok)
+      return request
+        .back()
+        .withErrors({ email: ["These credentials do not match our records."] });
+    return request.redirect("/dashboard");
   }
 }
 ```
 
 ```ts
 // routes/web.ts
-Route.get('/login', [AuthController, 'create']).middleware('guest');
-Route.post('/login', [AuthController, 'login']).middleware('guest');
-Route.post('/logout', [AuthController, 'logout']).middleware('auth');
-Route.get('/dashboard', [DashboardController, 'index']).middleware('auth');
+Route.get("/login", [AuthController, "create"]).middleware("guest");
+Route.post("/login", [AuthController, "login"]).middleware("guest");
+Route.post("/logout", [AuthController, "logout"]).middleware("auth");
+Route.get("/dashboard", [DashboardController, "index"]).middleware("auth");
 ```
 
 The `web` middleware group runs `StartSession` + `HandleInertiaRequests` +
@@ -1320,16 +1351,16 @@ everything — controllers, middleware, listeners, providers, and your own
 services — with **automatic constructor injection**:
 
 ```ts
-import { App } from '../../src/facades';
+import { App } from "../../src/facades";
 
-App.bind('post-repo', () => new PostRepository());          // factory (new instance each make)
-App.singleton('post-repo', () => new PostRepository());     // cached singleton
-App.instance('post-repo', repo);                            // already-built value
-App.alias(PostRepository, 'post-repo');                     // resolve by class too
+App.bind("post-repo", () => new PostRepository()); // factory (new instance each make)
+App.singleton("post-repo", () => new PostRepository()); // cached singleton
+App.instance("post-repo", repo); // already-built value
+App.alias(PostRepository, "post-repo"); // resolve by class too
 
-const repo = App.make('post-repo');          // resolve by key
-const svc = App.make(SomeService);           // resolve by class (auto-wired)
-await App.call(controller, 'method', args);  // invoke with container-wired params
+const repo = App.make("post-repo"); // resolve by key
+const svc = App.make(SomeService); // resolve by class (auto-wired)
+await App.call(controller, "method", args); // invoke with container-wired params
 ```
 
 Resolution inspects constructor parameters by type/name and injects:
@@ -1346,29 +1377,44 @@ magic-method classes. They forward every property/method call to the live
 singleton, so they always reflect the current request/container:
 
 ```ts
-import { App, Config, Route, DB, Schema, Auth, Gate, Session,
-         Event, Queue, Mail, Notification, Schedule, Inertia, Hash, Env }
-  from '../src/facades';
+import {
+  App,
+  Config,
+  Route,
+  DB,
+  Schema,
+  Auth,
+  Gate,
+  Session,
+  Event,
+  Queue,
+  Mail,
+  Notification,
+  Schedule,
+  Inertia,
+  Hash,
+  Env,
+} from "../src/facades";
 ```
 
-| Facade | Backing singleton | Typical use |
-| --- | --- | --- |
-| `App` | `app` | `App.make(...)`, `App.bind(...)` |
-| `Config` | `config` | `Config.get('app.name')` |
-| `Route` | `router` | `Route.get('/x', [C, 'm'])` |
-| `DB` | `db` | `DB.table('users').where(...)` |
-| `Schema` | `schema` | `Schema.create('users', cb)` |
-| `Auth` | `auth` | `Auth.attempt({...})`, `Auth.user()` |
-| `Gate` | `gate` | `Gate.define(...)`, `Gate.authorize(...)` |
-| `Session` | `session` | `Session.store()` |
-| `Event` | `events` | `Event.dispatch(new UserRegistered(user))` |
-| `Queue` | `queue` | `Queue.push(new Job(...))` |
-| `Mail` | `mail` | `Mail.to(x).send(new WelcomeMail(u))` |
-| `Notification` | `notifications` | `Notification.send(user, new N())` |
-| `Schedule` | `schedule` | `Schedule.call(fn).everyMinute()` |
-| `Inertia` | `inertia` | `Inertia.render('Home', props)` |
-| `Hash` | — | `Hash.make(pw)`, `Hash.check(pw, hash)` |
-| `Env` | — | `Env.get('X')`, `Env.bool('Y')`, `Env.number('Z')` |
+| Facade         | Backing singleton | Typical use                                        |
+| -------------- | ----------------- | -------------------------------------------------- |
+| `App`          | `app`             | `App.make(...)`, `App.bind(...)`                   |
+| `Config`       | `config`          | `Config.get('app.name')`                           |
+| `Route`        | `router`          | `Route.get('/x', [C, 'm'])`                        |
+| `DB`           | `db`              | `DB.table('users').where(...)`                     |
+| `Schema`       | `schema`          | `Schema.create('users', cb)`                       |
+| `Auth`         | `auth`            | `Auth.attempt({...})`, `Auth.user()`               |
+| `Gate`         | `gate`            | `Gate.define(...)`, `Gate.authorize(...)`          |
+| `Session`      | `session`         | `Session.store()`                                  |
+| `Event`        | `events`          | `Event.dispatch(new UserRegistered(user))`         |
+| `Queue`        | `queue`           | `Queue.push(new Job(...))`                         |
+| `Mail`         | `mail`            | `Mail.to(x).send(new WelcomeMail(u))`              |
+| `Notification` | `notifications`   | `Notification.send(user, new N())`                 |
+| `Schedule`     | `schedule`        | `Schedule.call(fn).everyMinute()`                  |
+| `Inertia`      | `inertia`         | `Inertia.render('Home', props)`                    |
+| `Hash`         | —                 | `Hash.make(pw)`, `Hash.check(pw, hash)`            |
+| `Env`          | —                 | `Env.get('X')`, `Env.bool('Y')`, `Env.number('Z')` |
 
 ### Events & listeners
 
@@ -1381,7 +1427,7 @@ export class UserRegistered {
 
 ```ts
 // dispatch
-import { Event } from '../../src/facades';
+import { Event } from "../../src/facades";
 await Event.dispatch(new UserRegistered(user));
 ```
 
@@ -1423,12 +1469,14 @@ Jobs extend `Job` and implement `handle()`:
 
 ```ts
 // app/Jobs/SendWelcomeEmailJob.ts
-import { Job } from '../../src/queue/Job';
+import { Job } from "../../src/queue/Job";
 
 export class SendWelcomeEmailJob extends Job {
-  public constructor(public readonly userId: number) { super(); }
+  public constructor(public readonly userId: number) {
+    super();
+  }
   public async handle(): Promise<void> {
-    const user = await User.findOrFail(this.userId);   // re-fetched in the worker
+    const user = await User.findOrFail(this.userId); // re-fetched in the worker
     await Mail.send(new WelcomeMail(user));
   }
 }
@@ -1437,19 +1485,19 @@ export class SendWelcomeEmailJob extends Job {
 Dispatch with the `Queue` facade:
 
 ```ts
-import { Queue } from '../../src/facades';
-await Queue.push(new SendWelcomeEmailJob(1));      // default connection
+import { Queue } from "../../src/facades";
+await Queue.push(new SendWelcomeEmailJob(1)); // default connection
 await Queue.later(60, new SendWelcomeEmailJob(1)); // delayed 60s
-await Queue.connection('database').push(job);      // named connection
+await Queue.connection("database").push(job); // named connection
 ```
 
 **Drivers** (`config/queue.ts`):
 
-| Driver | Notes |
-| --- | --- |
-| `sync` | runs inline in the request — the default (no worker needed) |
-| `database` | `jobs` + `failed_jobs` tables; consumed by a worker |
-| `redis` | BullMQ — requires `npm i bullmq ioredis` |
+| Driver     | Notes                                                       |
+| ---------- | ----------------------------------------------------------- |
+| `sync`     | runs inline in the request — the default (no worker needed) |
+| `database` | `jobs` + `failed_jobs` tables; consumed by a worker         |
+| `redis`    | BullMQ — requires `npm i bullmq ioredis`                    |
 
 **Worker options on `Job`:** `tries` (default 3), `backoff` seconds (3),
 `timeout` (60), `queue` name (`default`), `delay` seconds. Serialization stores
@@ -1471,26 +1519,33 @@ Mailables extend `Mailable` and declare an envelope + content:
 
 ```ts
 // app/Mail/WelcomeMail.ts
-import { Mailable } from '../../src/mail/Mailable';
-import type { Envelope, MailableContent } from '../../src/mail/Mailable';
+import { Mailable } from "../../src/mail/Mailable";
+import type { Envelope, MailableContent } from "../../src/mail/Mailable";
 
 export class WelcomeMail extends Mailable {
-  public constructor(private readonly user: User) { super(); }
+  public constructor(private readonly user: User) {
+    super();
+  }
 
   public envelope(): Envelope {
-    return { subject: 'Welcome!', to: { address: this.user.email, name: this.user.name } };
+    return {
+      subject: "Welcome!",
+      to: { address: this.user.email, name: this.user.name },
+    };
   }
 
   public content(): MailableContent {
-    return { view: 'emails.welcome' };   // resources/views/mail/emails/welcome.html
+    return { view: "emails.welcome" }; // resources/views/mail/emails/welcome.html
   }
 }
 ```
 
 ```ts
-import { Mail } from '../../src/facades';
+import { Mail } from "../../src/facades";
 await Mail.send(new WelcomeMail(user));
-await Mail.to('boss@example.com').cc('bcc@example.com').send(new WelcomeMail(user));
+await Mail.to("boss@example.com")
+  .cc("bcc@example.com")
+  .send(new WelcomeMail(user));
 ```
 
 **Drivers** (`config/mail.ts`): `log` (writes to `storage/logs/chava-mail.log`),
@@ -1509,19 +1564,22 @@ Notifications extend `Notification` and declare their channels in `via()`:
 
 ```ts
 // app/Notifications/WelcomeNotification.ts
-import { Notification } from '../../src/notifications/types';
-import type { Mailable } from '../../src/mail/Mailable';
-import type { NotifiableModel, DatabaseNotificationData } from '../../src/notifications/types';
+import { Notification } from "../../src/notifications/types";
+import type { Mailable } from "../../src/mail/Mailable";
+import type {
+  NotifiableModel,
+  DatabaseNotificationData,
+} from "../../src/notifications/types";
 
 export class WelcomeNotification extends Notification {
   public via(_notifiable: NotifiableModel): string[] {
-    return ['mail', 'database'];
+    return ["mail", "database"];
   }
   public toMail(notifiable: NotifiableModel): Mailable {
     return new WelcomeMail(notifiable);
   }
   public toDatabase(_notifiable: NotifiableModel): DatabaseNotificationData {
-    return { title: 'Welcome to chavaJs!', body: 'Your account is ready.' };
+    return { title: "Welcome to chavaJs!", body: "Your account is ready." };
   }
 }
 ```
@@ -1541,13 +1599,15 @@ and `HandleInertiaRequests` shares the unread count as
 `routes/console.ts` declares scheduled tasks with Laravel's API:
 
 ```ts
-import { Schedule } from '../src/facades';
+import { Schedule } from "../src/facades";
 
-Schedule.command('chava route:list').everyMinute();
+Schedule.command("chava route:list").everyMinute();
 Schedule.job(new SendWelcomeEmailJob(1)).hourly();
-Schedule.call(cleanupExpiredSessions).between('01:00', '05:00').dailyAt('03:00');
-Schedule.call(backup).weeklyOn(0, '02:30');    // Sunday 02:30
-Schedule.call(report).cron('0 */2 * * *');     // every 2 hours
+Schedule.call(cleanupExpiredSessions)
+  .between("01:00", "05:00")
+  .dailyAt("03:00");
+Schedule.call(backup).weeklyOn(0, "02:30"); // Sunday 02:30
+Schedule.call(report).cron("0 */2 * * *"); // every 2 hours
 ```
 
 **Frequencies** — `everyMinute`, `everyTwoMinutes`, `everyFiveMinutes`,
@@ -1580,7 +1640,7 @@ export class UserRegistered {
 // `handle(event: UserRegistered)` type-hint (no manual registration).
 // Extending ShouldQueue pushes handle() onto the queue (queue:work) so a
 // slow or failing mail transport can never break registration.
-import { ShouldQueue } from '../../src/events/queue';
+import { ShouldQueue } from "../../src/events/queue";
 
 export class SendWelcomeNotification extends ShouldQueue {
   public static tries = 3;
@@ -1595,13 +1655,13 @@ export class SendWelcomeNotification extends ShouldQueue {
 // app/Notifications/WelcomeNotification.ts
 export class WelcomeNotification extends Notification {
   public via(): string[] {
-    return ['mail', 'database'];
+    return ["mail", "database"];
   }
   public toMail(notifiable): Mailable {
     return new WelcomeMail(notifiable); // renders resources/views/mail/emails/welcome.html
   }
   public toDatabase(notifiable): DatabaseNotificationData {
-    return { title: 'Welcome to chavaJs!', body: 'Your account is ready.' };
+    return { title: "Welcome to chavaJs!", body: "Your account is ready." };
   }
 }
 ```
@@ -1609,7 +1669,9 @@ export class WelcomeNotification extends Notification {
 ```ts
 // app/Jobs/SendWelcomeEmailJob.ts — dispatched with `Queue.push(...)`
 export class SendWelcomeEmailJob extends Job {
-  public constructor(public readonly userId: number) { super(); }
+  public constructor(public readonly userId: number) {
+    super();
+  }
   public async handle(): Promise<void> {
     const user = await User.findOrFail(this.userId); // models are re-fetched
     await Mail.send(new WelcomeMail(user));
@@ -1619,9 +1681,9 @@ export class SendWelcomeEmailJob extends Job {
 
 ```ts
 // routes/console.ts — Laravel's schedule API, ported
-Schedule.command('chava route:list').everyMinute();
+Schedule.command("chava route:list").everyMinute();
 Schedule.job(new SendWelcomeEmailJob(1)).hourly();
-Schedule.call(cleanup).between('01:00', '05:00').dailyAt('03:00');
+Schedule.call(cleanup).between("01:00", "05:00").dailyAt("03:00");
 ```
 
 ```bash
@@ -1643,11 +1705,11 @@ data. There is no separate API layer to build for pages.
 
 ```ts
 // app/Http/Controllers/HomeController.ts
-import { Inertia } from '../../src/facades';
+import { Inertia } from "../../src/facades";
 
 export class HomeController {
   public index() {
-    return Inertia.render('Home', { title: 'Welcome' });
+    return Inertia.render("Home", { title: "Welcome" });
   }
 }
 ```
@@ -1675,14 +1737,14 @@ Shared props are exposed to the client via `usePage().props`.
 `resources/js/app.tsx` bootstraps Inertia + React:
 
 ```tsx
-import { createInertiaApp } from '@inertiajs/react';
-import { createRoot } from 'react-dom/client';
-import { AppLayout } from './Layouts/AppLayout';
+import { createInertiaApp } from "@inertiajs/react";
+import { createRoot } from "react-dom/client";
+import { AppLayout } from "./Layouts/AppLayout";
 
 createInertiaApp({
-  title: (title) => (title ? `${title} — chavaJs` : 'chavaJs'),
+  title: (title) => (title ? `${title} — chavaJs` : "chavaJs"),
   resolve: (name) => {
-    const pages = import.meta.glob('./Pages/**/*.tsx', { eager: true });
+    const pages = import.meta.glob("./Pages/**/*.tsx", { eager: true });
     return pages[`./Pages/${name}.tsx`];
   },
   setup({ el, App, props }) {
@@ -1722,7 +1784,7 @@ server validation errors into shadcn `Label` + animated `FieldError` fields
 
 - **Development** — `npm run dev` starts Vite on :5173 (auto-moved if taken);
   `HtmlRenderer` injects the React-refresh preamble, `@vite/client`, and the
-  entry module pointing at the *actual* Vite URL threaded through config.
+  entry module pointing at the _actual_ Vite URL threaded through config.
 - **Production** — `npm run build` writes hashed assets and a manifest to
   `public/build/` (`manifest.json` or `.vite/manifest.json`, the
   laravel-vite-plugin convention); `HtmlRenderer` resolves the entry's JS/CSS
@@ -1743,39 +1805,39 @@ equivalent — it runs the app's own bundled CLI), or globally with
 
 ### Every command & flag
 
-| Command | Flags | Purpose |
-| --- | --- | --- |
-| `new <name>` | `--database=sqlite\|postgres\|mysql`, `--auth` / `--no-auth`, `--docs` / `--no-docs`, `--package-manager=npm\|pnpm\|yarn`, `--skip-install`, `--framework <path>`, `--core-version <version>` | Scaffold a new app (provided by `@chavajs/installer`, not the console) |
-| `serve` | `-p, --port <port>` (default 8080), `-H, --host <host>` (default 127.0.0.1), `--no-vite` | Dev server (+ Vite unless disabled); auto-moves to the next free port if taken |
-| `route:list` | — | Print the route table (method, URI, action) |
-| `migrate` | — | Run pending migrations |
-| `migrate:rollback` | — | Undo the last migration batch |
-| `migrate:reset` | — | Roll back every migration |
-| `migrate:fresh` | `--seed` (re-seed with `DatabaseSeeder` after), `--seeder <class>` | Drop all tables, re-run all migrations |
-| `migrate:refresh` | `--seed` / `--seeder <class>` | Roll back every migration, then re-run |
-| `migrate:status` | — | List migrations + run status |
-| `db:seed` | `--class <class>` | Run the seeders (`DatabaseSeeder` by default) |
-| `db:wipe` | — | Drop all tables without re-running migrations |
-| `about` | — | Show app name, env, framework version, drivers |
-| `queue:work` | `--once` (process a single job then exit) | Consume the queue (database/redis) |
-| `queue:listen` | — | Auto-restarting worker |
-| `schedule:run` | — | Run every due scheduled task |
-| `schedule:list` | — | List scheduled tasks + cron expressions |
-| `tinker` | — | Interactive REPL (see below) |
-| `make:model <name>` | — | `app/Models/<Name>.ts` |
-| `make:migration <name>` | — | Timestamped `database/migrations/<name>.ts` |
-| `make:factory [name]` | `--model <model>` (derived from the name by default) | `database/factories/<Name>Factory.ts` |
-| `make:seeder [name]` | `--class <class>` | `database/seeders/<Name>Seeder.ts` |
-| `make:request <name>` | — | `app/Http/Requests/<Name>Request.ts` |
-| `make:policy <name>` | — | `app/Policies/<Name>Policy.ts` |
-| `make:event <name>` | — | `app/Events/<Name>Event.ts` |
-| `make:listener <name>` | — | `app/Listeners/<Name>Listener.ts` |
-| `make:job <name>` | — | `app/Jobs/<Name>Job.ts` |
-| `make:notification <name>` | — | `app/Notifications/<Name>Notification.ts` |
-| `make:mail <name>` | — | `app/Mail/<Name>Mail.ts` |
-| `make:controller <name>` | `-r, --resource`, `-a, --api` (resource w/o create/edit views), `-i, --invokable` (single-action `__invoke`) | `app/Http/Controllers/<Name>Controller.ts` |
-| `make:middleware <name>` | — | `app/Http/Middleware/<Name>Middleware.ts` |
-| `make:test <name>` | `-u, --unit` (else feature) | `tests/Unit\|Feature/<Name>Test.ts` |
+| Command                    | Flags                                                                                                                                                                                         | Purpose                                                                        |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `new <name>`               | `--database=sqlite\|postgres\|mysql`, `--auth` / `--no-auth`, `--docs` / `--no-docs`, `--package-manager=npm\|pnpm\|yarn`, `--skip-install`, `--framework <path>`, `--core-version <version>` | Scaffold a new app (provided by `@chavajs/installer`, not the console)         |
+| `serve`                    | `-p, --port <port>` (default 8080), `-H, --host <host>` (default 127.0.0.1), `--no-vite`                                                                                                      | Dev server (+ Vite unless disabled); auto-moves to the next free port if taken |
+| `route:list`               | —                                                                                                                                                                                             | Print the route table (method, URI, action)                                    |
+| `migrate`                  | —                                                                                                                                                                                             | Run pending migrations                                                         |
+| `migrate:rollback`         | —                                                                                                                                                                                             | Undo the last migration batch                                                  |
+| `migrate:reset`            | —                                                                                                                                                                                             | Roll back every migration                                                      |
+| `migrate:fresh`            | `--seed` (re-seed with `DatabaseSeeder` after), `--seeder <class>`                                                                                                                            | Drop all tables, re-run all migrations                                         |
+| `migrate:refresh`          | `--seed` / `--seeder <class>`                                                                                                                                                                 | Roll back every migration, then re-run                                         |
+| `migrate:status`           | —                                                                                                                                                                                             | List migrations + run status                                                   |
+| `db:seed`                  | `--class <class>`                                                                                                                                                                             | Run the seeders (`DatabaseSeeder` by default)                                  |
+| `db:wipe`                  | —                                                                                                                                                                                             | Drop all tables without re-running migrations                                  |
+| `about`                    | —                                                                                                                                                                                             | Show app name, env, framework version, drivers                                 |
+| `queue:work`               | `--once` (process a single job then exit)                                                                                                                                                     | Consume the queue (database/redis)                                             |
+| `queue:listen`             | —                                                                                                                                                                                             | Auto-restarting worker                                                         |
+| `schedule:run`             | —                                                                                                                                                                                             | Run every due scheduled task                                                   |
+| `schedule:list`            | —                                                                                                                                                                                             | List scheduled tasks + cron expressions                                        |
+| `tinker`                   | —                                                                                                                                                                                             | Interactive REPL (see below)                                                   |
+| `make:model <name>`        | —                                                                                                                                                                                             | `app/Models/<Name>.ts`                                                         |
+| `make:migration <name>`    | —                                                                                                                                                                                             | Timestamped `database/migrations/<name>.ts`                                    |
+| `make:factory [name]`      | `--model <model>` (derived from the name by default)                                                                                                                                          | `database/factories/<Name>Factory.ts`                                          |
+| `make:seeder [name]`       | `--class <class>`                                                                                                                                                                             | `database/seeders/<Name>Seeder.ts`                                             |
+| `make:request <name>`      | —                                                                                                                                                                                             | `app/Http/Requests/<Name>Request.ts`                                           |
+| `make:policy <name>`       | —                                                                                                                                                                                             | `app/Policies/<Name>Policy.ts`                                                 |
+| `make:event <name>`        | —                                                                                                                                                                                             | `app/Events/<Name>Event.ts`                                                    |
+| `make:listener <name>`     | —                                                                                                                                                                                             | `app/Listeners/<Name>Listener.ts`                                              |
+| `make:job <name>`          | —                                                                                                                                                                                             | `app/Jobs/<Name>Job.ts`                                                        |
+| `make:notification <name>` | —                                                                                                                                                                                             | `app/Notifications/<Name>Notification.ts`                                      |
+| `make:mail <name>`         | —                                                                                                                                                                                             | `app/Mail/<Name>Mail.ts`                                                       |
+| `make:controller <name>`   | `-r, --resource`, `-a, --api` (resource w/o create/edit views), `-i, --invokable` (single-action `__invoke`)                                                                                  | `app/Http/Controllers/<Name>Controller.ts`                                     |
+| `make:middleware <name>`   | —                                                                                                                                                                                             | `app/Http/Middleware/<Name>Middleware.ts`                                      |
+| `make:test <name>`         | `-u, --unit` (else feature)                                                                                                                                                                   | `tests/Unit\|Feature/<Name>Test.ts`                                            |
 
 `chava --version` inside an app prints the framework version the app was
 assembled with; the standalone `@chavajs/cli` reports its own version.
@@ -1818,11 +1880,11 @@ in-memory SQLite database and exercise the HTTP layer through
 
 ```ts
 // tests/Feature/ExampleTest.ts
-import { describe, expect, it } from 'vitest';
-import { freshApp } from '../helpers/db';
+import { describe, expect, it } from "vitest";
+import { freshApp } from "../helpers/db";
 
-describe('example', () => {
-  it('serves a route', async () => {
+describe("example", () => {
+  it("serves a route", async () => {
     const app = await freshApp();
     const server = await app.serve(0);
     const res = await fetch(`http://127.0.0.1:${server.address().port}/`);
@@ -1945,81 +2007,67 @@ Scheduled tasks need a cron entry that runs `schedule:run` every minute:
 - **Scaling** — the app server is stateless between requests except for the
   `file` session driver and local storage; for multi-instance deploys use the
   `array`/external session driver story or stick with a single instance + a
-  shared worker tier. Databases (Postgres/MySQL) and Redis are the 
+  shared worker tier. Databases (Postgres/MySQL) and Redis are the
   horizontally scalable pieces.
 
 ---
 
 ## Laravel → chavaJs cheat-sheet
 
-| Laravel (PHP) | chavaJs (TS) |
-| --- | --- |
-| `Route::get('/users', [UserController::class, 'index'])` | `Route.get('/users', [UserController, 'index'])` |
-| `Route::resource('users', UserController::class)` | `Route.resource('users', UserController)` |
-| `Route::middleware('auth')->group(…)` | `Route.middleware('auth').group(…)` |
-| `Inertia::render('Pages/Home', ['users' => $users])` | `Inertia.render('Home', { users })` |
-| `config('app.name')` | `Config.get('app.name')` |
-| `env('APP_ENV')` | `Env.get('APP_ENV')` |
-| `app()->bind('x', fn () => new X)` | `app.bind('x', () => new X())` |
-| `$request->input('name')` / `only(['a'])` | `request.input('name')` / `request.only('a')` |
-| `bootstrap/app.php` | `bootstrap/app.ts` |
-| `php artisan serve` | `chava serve` |
-| `php artisan route:list` | `chava route:list` |
-| `php artisan migrate` | `chava migrate` |
-| `php artisan db:seed` | `chava db:seed` |
-| `php artisan make:model` | `chava make:model` |
-| `User::find(1)` / `User::where('email', $e)` | `User.find(1)` / `User.where('email', e)` |
-| `$user->posts` (relation property) | `user.posts` (after `with('posts')`) |
-| `User::with('posts')->get()` | `User.with('posts').get()` |
-| `Schema::create('users', fn ($table) => …)` | `Schema.create('users', (table) => …)` |
-| `UserFactory::new()->count(10)->create()` | `UserFactory.new().count(10).create()` |
-| `Validator::make($d, ['e' => 'required|email'])` | `Validator.make(d, { e: 'required|email' })` |
-| `Auth::attempt([...])` / `Auth::user()` | `Auth.attempt({...})` / `request.user()` |
-| `$user->can('delete', $post)` | `user.can('delete', post)` |
-| `Gate::policy(User::class, UserPolicy::class)` | `Gate.policy(User, UserPolicy)` |
-| `Auth::login($user)` | `Auth.login(user)` (SessionGuard) |
-| `php artisan make:request` / `make:policy` | `chava make:request` / `make:policy` |
-| `Event::dispatch(new UserRegistered($user))` | `Event.dispatch(new UserRegistered(user))` |
-| `$user->notify(new WelcomeNotification())` | `user.notify(new WelcomeNotification())` |
-| `$user->unreadNotifications()` | `user.unreadNotifications()` |
-| `Mail::to($x)->send(new WelcomeMail($u))` | `Mail.to(x).send(new WelcomeMail(u))` |
-| `Queue::push(new SendWelcomeEmailJob($id))` | `Queue.push(new SendWelcomeEmailJob(id))` |
-| `Schedule::command('x')->daily()` | `Schedule.command('chava route:list').daily()` |
-| `php artisan queue:work` / `schedule:run` | `chava queue:work` / `chava schedule:run` |
-| `php artisan make:notification` / `make:mail` | `chava make:notification` / `chava make:mail` |
-| `php artisan make:controller --resource` | `chava make:controller PostController --resource` |
-| `php artisan make:middleware` / `make:test --unit` | `chava make:middleware` / `chava make:test --unit` |
-| `php artisan make:factory --model=User` | `chava make:factory --model=User` |
-| `php artisan tinker` | `chava tinker` |
-| `php artisan queue:listen` | `chava queue:listen` |
-| `Route::get('/x', InvokableController::class)` | `Route.get('/x', InvokableController)` (`__invoke`) |
-| Listener implements `ShouldQueue` | `class X extends ShouldQueue` (runs as a queued job) |
-| `$user->notifications` inbox + `markAsRead()` | `/notifications` page + `markAsRead()` |
-| `Hash::make($pw)` / `Hash::check($pw, $h)` | `Hash.make(pw)` / `Hash.check(pw, h)` (scrypt) |
-| `Gate::define('x', fn) / Gate::authorize('x')` | `Gate.define('x', fn) / Gate.authorize('x')` |
-| `$request->validate([...])` | `await request.validate({...})` |
-| `$request->bearerToken()` | `request.bearerToken()` |
-| `Response::json($x)` | `Response.json(x)` |
-| `->withErrors([...])` | `request.back().withErrors({...})` |
-| `->where('id', '[0-9]+')` | `Route.get('/users/{id}', …).where({ id: '[0-9]+' })` |
-| `Route::middleware('can:delete,users')` | `Route…middleware('can:delete,users')` |
+| Laravel (PHP)                                            | chavaJs (TS)                                          |
+| -------------------------------------------------------- | ----------------------------------------------------- | --------------------------------- | ---------- |
+| `Route::get('/users', [UserController::class, 'index'])` | `Route.get('/users', [UserController, 'index'])`      |
+| `Route::resource('users', UserController::class)`        | `Route.resource('users', UserController)`             |
+| `Route::middleware('auth')->group(…)`                    | `Route.middleware('auth').group(…)`                   |
+| `Inertia::render('Pages/Home', ['users' => $users])`     | `Inertia.render('Home', { users })`                   |
+| `config('app.name')`                                     | `Config.get('app.name')`                              |
+| `env('APP_ENV')`                                         | `Env.get('APP_ENV')`                                  |
+| `app()->bind('x', fn () => new X)`                       | `app.bind('x', () => new X())`                        |
+| `$request->input('name')` / `only(['a'])`                | `request.input('name')` / `request.only('a')`         |
+| `bootstrap/app.php`                                      | `bootstrap/app.ts`                                    |
+| `php artisan serve`                                      | `chava serve`                                         |
+| `php artisan route:list`                                 | `chava route:list`                                    |
+| `php artisan migrate`                                    | `chava migrate`                                       |
+| `php artisan db:seed`                                    | `chava db:seed`                                       |
+| `php artisan make:model`                                 | `chava make:model`                                    |
+| `User::find(1)` / `User::where('email', $e)`             | `User.find(1)` / `User.where('email', e)`             |
+| `$user->posts` (relation property)                       | `user.posts` (after `with('posts')`)                  |
+| `User::with('posts')->get()`                             | `User.with('posts').get()`                            |
+| `Schema::create('users', fn ($table) => …)`              | `Schema.create('users', (table) => …)`                |
+| `UserFactory::new()->count(10)->create()`                | `UserFactory.new().count(10).create()`                |
+| `Validator::make($d, ['e' => 'required                   | email'])`                                             | `Validator.make(d, { e: 'required | email' })` |
+| `Auth::attempt([...])` / `Auth::user()`                  | `Auth.attempt({...})` / `request.user()`              |
+| `$user->can('delete', $post)`                            | `user.can('delete', post)`                            |
+| `Gate::policy(User::class, UserPolicy::class)`           | `Gate.policy(User, UserPolicy)`                       |
+| `Auth::login($user)`                                     | `Auth.login(user)` (SessionGuard)                     |
+| `php artisan make:request` / `make:policy`               | `chava make:request` / `make:policy`                  |
+| `Event::dispatch(new UserRegistered($user))`             | `Event.dispatch(new UserRegistered(user))`            |
+| `$user->notify(new WelcomeNotification())`               | `user.notify(new WelcomeNotification())`              |
+| `$user->unreadNotifications()`                           | `user.unreadNotifications()`                          |
+| `Mail::to($x)->send(new WelcomeMail($u))`                | `Mail.to(x).send(new WelcomeMail(u))`                 |
+| `Queue::push(new SendWelcomeEmailJob($id))`              | `Queue.push(new SendWelcomeEmailJob(id))`             |
+| `Schedule::command('x')->daily()`                        | `Schedule.command('chava route:list').daily()`        |
+| `php artisan queue:work` / `schedule:run`                | `chava queue:work` / `chava schedule:run`             |
+| `php artisan make:notification` / `make:mail`            | `chava make:notification` / `chava make:mail`         |
+| `php artisan make:controller --resource`                 | `chava make:controller PostController --resource`     |
+| `php artisan make:middleware` / `make:test --unit`       | `chava make:middleware` / `chava make:test --unit`    |
+| `php artisan make:factory --model=User`                  | `chava make:factory --model=User`                     |
+| `php artisan tinker`                                     | `chava tinker`                                        |
+| `php artisan queue:listen`                               | `chava queue:listen`                                  |
+| `Route::get('/x', InvokableController::class)`           | `Route.get('/x', InvokableController)` (`__invoke`)   |
+| Listener implements `ShouldQueue`                        | `class X extends ShouldQueue` (runs as a queued job)  |
+| `$user->notifications` inbox + `markAsRead()`            | `/notifications` page + `markAsRead()`                |
+| `Hash::make($pw)` / `Hash::check($pw, $h)`               | `Hash.make(pw)` / `Hash.check(pw, h)` (scrypt)        |
+| `Gate::define('x', fn) / Gate::authorize('x')`           | `Gate.define('x', fn) / Gate.authorize('x')`          |
+| `$request->validate([...])`                              | `await request.validate({...})`                       |
+| `$request->bearerToken()`                                | `request.bearerToken()`                               |
+| `Response::json($x)`                                     | `Response.json(x)`                                    |
+| `->withErrors([...])`                                    | `request.back().withErrors({...})`                    |
+| `->where('id', '[0-9]+')`                                | `Route.get('/users/{id}', …).where({ id: '[0-9]+' })` |
+| `Route::middleware('can:delete,users')`                  | `Route…middleware('can:delete,users')`                |
 
 See **[PARITY.md](./PARITY.md)** for the full feature-by-feature mapping and
 status, and **[ROADMAP.md](./ROADMAP.md)** for the long-term plan.
-
-## Roadmap
-
-- **Phase 5** — Jobs/queues, events, notifications, mailables, task scheduler ✅
-- **Phase 6** — Remaining `chava make:*` generators, `tinker`, `queue:listen` ✅
-- **Phase 7** — Notification inbox, `useForm()` → shadcn form error wiring,
-  richer Motion interactions ✅
-- **Phase 8** — Postgres/MySQL drivers, `create-chava-app` installer, Playwright
-  browser tests, GitHub Actions CI, docs ✅
-- **v0.0.3** — Monorepo repair: `packages/*` split, embedded-assembly
-  model, reference app + CI green across SQLite/Postgres/MySQL ✅
-- **Next** — `@chavajs/core` and `@chavajs/inertia-react` as publishable npm
-  packages (exports maps + `.d.ts`), VitePress docs site, remaining `planned`
-  items (see `ROADMAP.md` and `PARITY.md`)
 
 ## License
 
