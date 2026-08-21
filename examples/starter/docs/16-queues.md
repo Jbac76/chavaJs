@@ -30,6 +30,29 @@ export class SendWelcomeEmail extends Job {
 }
 ```
 
+## Job options
+
+| Property | Description |
+|----------|-------------|
+| `queue` | The queue name to dispatch to (default: `default`) |
+| `tries` | Max attempts before the job is marked as failed (default: `undefined` = infinite) |
+| `backoff` | Seconds to wait between retries |
+| `timeout` | Seconds before the job is killed (default: `60`) |
+| `connection` | Queue connection to use (overrides `QUEUE_CONNECTION`) |
+
+```ts
+export class ProcessReport extends Job {
+  public queue = 'reports';
+  public tries = 5;
+  public backoff = 10;
+  public timeout = 120;
+
+  public async handle(): Promise<void> {
+    // long-running work
+  }
+}
+```
+
 ## Dispatching
 
 ```ts
@@ -49,6 +72,18 @@ js queue:work      # process jobs in a foreground worker
 js queue:listen    # same, restarting on app file changes
 ```
 
+### Worker options
+
+| Command | Description |
+|---------|-------------|
+| `js queue:work` | Process jobs until the process is stopped |
+| `js queue:work --once` | Process one job then exit |
+| `js queue:work --stop-when-empty` | Process all jobs then exit |
+| `js queue:listen` | Restart the worker when app files change |
+| `js queue:failed` | List all failed jobs |
+| `js queue:retry {id}` | Retry a specific failed job by ID |
+| `js queue:flush` | Delete all failed jobs |
+
 ## Queue connections
 
 `config/queue.ts` selects the driver (`QUEUE_CONNECTION`):
@@ -64,8 +99,22 @@ The database driver creates its own `jobs` table on first use and exposes
 
 ## Failed jobs
 
-A job that exhausts its `tries` is dropped (with the exception logged). There
-is no failed-job replay table yet.
+A job that exhausts its `tries` is dropped (with the exception logged).
+View failed jobs:
+
+```bash
+js queue:failed
+# ID  Connection  Queue  Payload  Exception  Failed At
+# 1   database    default {...}  Timeout...  2026-01-15 10:30:00
+```
+
+Retry or flush:
+
+```bash
+js queue:retry 1          # retry job with ID 1
+js queue:retry all        # retry all failed jobs
+js queue:flush            # delete all failed jobs
+```
 
 ## Queued events
 

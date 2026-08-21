@@ -79,18 +79,70 @@ const user = await request.user();
 if (!user) throw new Error('Unauthenticated');
 ```
 
-## Gates & policies
+## Gates
 
-Authorize actions with the `Gate` facade. Gates are closures taking the user
-plus optional arguments:
+Gates are closures that authorize actions. They receive the user plus any
+additional arguments:
 
 ```ts
 import { Gate } from '../src/facades';
 
 Gate.define('update-post', (user, post) => user.id === post.user_id);
+```
+
+### Gate API
+
+| Method | Description |
+|--------|-------------|
+| `define(ability, callback)` | Register an authorization ability |
+| `policy(modelClass, policyClass)` | Register a policy class for a model |
+| `before(callback)` | Register a callback that runs **before** ability checks |
+| `after(callback)` | Register a callback that runs **after** ability checks |
+| `forUser(user)` | Return a new Gate scoped to a specific user |
+| `allows(ability, ...args)` | `true` if the user is authorized |
+| `denies(ability, ...args)` | `true` if the user is **not** authorized |
+| `can(ability, ...args)` | Alias for `allows()` |
+| `authorize(ability, ...args)` | Throws 403 if denied; returns `true` if allowed |
+| `check(abilities[])` | `true` only if **all** listed abilities are granted |
+| `any(abilities[])` | `true` if **at least one** ability is granted |
+| `none(abilities[])` | `true` if **no** abilities are granted |
+
+### Checking abilities
+
+```ts
+import { Gate } from '../src/facades';
+
 const allowed = await Gate.forUser(user).allows('update-post', post);
 await Gate.forUser(user).authorize('update-post', post); // throws 403
 ```
+
+### Before / after callbacks
+
+Short-circuit all ability checks with `before()`:
+
+```ts
+Gate.before((user) => {
+  if (user.isAdmin) return true; // admins can do everything
+});
+```
+
+Override the result with `after()`:
+
+```ts
+Gate.after((user, ability, result) => {
+  if (user.isSuperAdmin) return true; // super admins always pass
+});
+```
+
+### Batch checks
+
+```ts
+await Gate.forUser(user).check(['update-post', 'delete-post']);  // both must pass
+await Gate.forUser(user).any(['update-post', 'delete-post']);    // at least one
+await Gate.forUser(user).none(['update-post', 'delete-post']);   // none pass
+```
+
+## Policies
 
 Policies group abilities per model — `js make:policy PostPolicy`:
 
@@ -107,6 +159,27 @@ export class PostPolicy {
 Gate.policy(Post, PostPolicy);
 await Gate.forUser(user).authorize('update', post);
 ```
+
+The policy method name matches the ability name. The first `Model` argument
+is used to look up the policy automatically.
+
+### Using `authorize()` in controllers
+
+The base `Controller` class provides a protected `authorize()` helper:
+
+```ts
+import { Controller } from '../../src/http/Controller';
+
+export class PostController extends Controller {
+  public async destroy(request: Request, post: Post) {
+    await this.authorize('delete', post); // throws 403 if denied
+    await post.forceDelete();
+    return request.back();
+  }
+}
+```
+
+### The `can` middleware
 
 The `can` middleware runs a gate/policy check per request:
 

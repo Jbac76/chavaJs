@@ -65,3 +65,39 @@ my-app/
 - [Configuration](02-configuration) — `.env` and `config/*`
 - [Routing](04-routing) — the request lifecycle
 - [Console](20-console) — every `js` command
+
+## Import styles
+
+chavaJs supports two ways to import framework code:
+
+### Framework-as-source (default)
+
+Every `chava new` app includes the framework source directly in `src/`. Import
+via relative paths:
+
+```ts
+import { Route } from '../src/facades';
+import { Model } from '../../src/orm/Model';
+import { Controller } from '../../../src/http/Controller';
+```
+
+This is the standard pattern — no build step, full source maps, instant
+feedback. The `../src/...` imports are intentional and correct.
+
+### Package import
+
+If you prefer npm-style imports, `@chavajs/core` supports both:
+
+```ts
+// Barrel import (all facades + common classes)
+import { Route, Model, Controller, Job } from '@chavajs/core';
+
+// Deep import (specific module)
+import { Model } from '@chavajs/core/orm/Model';
+import { Job } from '@chavajs/core/queue/Job';
+import { Validator } from '@chavajs/core/validation/Validator';
+```
+
+This works when `@chavajs/core` is installed as a dependency. The package
+exports TypeScript source directly — no compilation needed when using `tsx` or
+a bundler that handles `.ts` files.

@@ -45,6 +45,84 @@ or run it with `js serve --no-vite` under systemd / Docker. The server binds
 `127.0.0.1:8080` by default — put a reverse proxy (nginx, Caddy, or a
 platform's ingress) in front and terminate TLS there.
 
+## Docker deployment
+
+### Dockerfile
+
+```dockerfile
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev
+COPY --from=builder /app/public/build ./public/build
+COPY . .
+ENV APP_ENV=production
+ENV NODE_ENV=production
+EXPOSE 8080
+CMD ["node", "bin/chava.js", "serve", "--no-vite"]
+```
+
+### docker-compose.yml
+
+```yaml
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    env_file: .env
+    depends_on:
+      - db
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: chava
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+```
+
+## Platform guides
+
+### Railway
+
+1. Connect your GitHub repo
+2. Set env vars in the Railway dashboard (`APP_KEY`, `DB_CONNECTION`, etc.)
+3. Railway auto-detects Node.js and runs `npm start` — override with:
+   ```
+   start: node bin/chava.js serve --no-vite
+   ```
+4. Add a cron service for scheduling: `js schedule:run`
+
+### Fly.io
+
+```bash
+fly launch
+fly postgres create --name chava-db
+fly secrets set APP_KEY=$(openssl rand -hex 32) DB_CONNECTION=pg
+fly deploy
+```
+
+### Render
+
+1. Create a Web Service → Node
+2. Build command: `npm ci && npm run build`
+3. Start command: `node bin/chava.js serve --no-vite`
+4. Add a Background Worker for queues: `js queue:work`
+5. Add a Cron Job for scheduling: `js schedule:run`
+
 ## Scheduled tasks
 
 Add the scheduler to cron so `schedule:run` fires every minute (see
@@ -63,6 +141,24 @@ js queue:work
 ```
 
 Run it under a process manager too (`pm2 start bin/chava.js --name worker -- queue:work`).
+
+## Health check endpoint
+
+Add a simple health check for load balancers:
+
+```ts
+Route.get('/health', () => ({ status: 'ok', timestamp: Date.now() }));
+```
+
+## Graceful shutdown
+
+The server handles `SIGTERM` and `SIGINT` for graceful shutdown — important
+for zero-downtime deploys:
+
+```bash
+kill -SIGTERM <pid>
+# server finishes in-flight requests, then exits
+```
 
 ## Environment summary
 

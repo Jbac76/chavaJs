@@ -17,6 +17,7 @@ pattern used by the framework's own suite:
 
 ```ts
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import type { Server } from 'node:http';
 import { app } from '../../bootstrap/app';
 
 let server: Server;
@@ -72,6 +73,11 @@ Use SQLite `:memory:` by pointing `DB_DATABASE=:memory:` (the default test
 setup), then migrate:
 
 ```ts
+process.env.DB_CONNECTION = 'sqlite';
+process.env.DB_DATABASE = ':memory:';
+process.env.SESSION_DRIVER = 'array';
+process.env.APP_KEY = 'test-key-0123456789abcdef0123456789abcdef';
+
 import { Migrator } from '../../src/database/Migrator';
 import { currentApp } from '../../src/foundation/registry';
 
@@ -80,10 +86,118 @@ beforeAll(async () => {
 });
 ```
 
+### The test helper
+
+The starter ships a `tests/helpers/db.ts` with reusable helpers:
+
+```ts
+import { freshApp } from '../helpers/db';
+
+beforeEach(async () => {
+  await freshApp(); // boots a fresh app + migrates
+});
+```
+
+### Using factories
+
 Factories (see [Seeding](12-seeding)) make fixtures fast:
 
 ```ts
-const user = await makeUser({ email: 'test@example.com' });
+import { User } from '../../app/Models/User';
+
+const user = await User.create({ name: 'Alice', email: 'alice@example.com', password: 'secret' });
+```
+
+## Testing HTTP requests
+
+Set up Inertia headers for most requests:
+
+```ts
+async function apiRequest(method: string, path: string, jar: CookieJar, data = {}) {
+  const headers = {
+    'X-Inertia': 'true',
+    'X-Inertia-Version': '1.0.0',
+    ...(jar.cookie ? { Cookie: jar.cookie } : {}),
+  };
+  const response = await fetch(`${baseUrl}${path}`, { method, headers });
+  return { status: response.status, body: await response.json() };
+}
+```
+
+### Testing POST/PUT/DELETE with CSRF
+
+```ts
+// GET the page first to establish a session + CSRF token
+const init = await fetch(`${baseUrl}/login`, { headers });
+const csrf = extractCsrf(init);
+
+// POST with the CSRF token
+const response = await fetch(`${baseUrl}/login`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/x-www-form-urlencoded',
+    'X-CSRF-TOKEN': csrf,
+    Cookie: jar.cookie,
+  },
+  body: new URLSearchParams({ email, password }).toString(),
+  redirect: 'manual',
+});
+```
+
+## Testing validation
+
+```ts
+import { Validator } from '../../src/validation/Validator';
+
+it('rejects invalid email', async () => {
+  const v = Validator.make({ email: 'bad' }, { email: 'required|email' });
+  expect(await v.fails()).toBe(true);
+  expect(v.errorsFirst().email).toBeDefined();
+});
+
+it('passes valid data', async () => {
+  const v = Validator.make({ email: 'ok@example.com' }, { email: 'required|email' });
+  expect(await v.passes()).toBe(true);
+  expect(v.validated()).toEqual({ email: 'ok@example.com' });
+});
+```
+
+## Testing the Gate
+
+```ts
+import { Gate } from '../../src/auth/Gate';
+import { User } from '../../app/Models/User';
+
+it('allows admins to manage users', async () => {
+  const app = await freshApp();
+  const admin = await User.create({ name: 'Admin', email: 'a@test.com', password: 'x', is_admin: true });
+  const gate = app.make<Gate>('gate');
+  gate.define('manage-users', (user) => user?.getAttribute('is_admin') === true);
+
+  expect(await gate.forUser(admin).allows('manage-users')).toBe(true);
+});
+
+it('throws AuthorizationException when denied', async () => {
+  const app = await freshApp();
+  const member = await User.create({ name: 'Member', email: 'm@test.com', password: 'x', is_admin: false });
+  const gate = app.make<Gate>('gate');
+  gate.define('manage-users', (user) => user?.getAttribute('is_admin') === true);
+
+  await expect(gate.forUser(member).authorize('manage-users')).rejects.toThrow();
+});
+```
+
+## Testing the session
+
+```ts
+it('stores and retrieves session data', async () => {
+  const store = request.session();
+  store.put('key', 'value');
+  expect(store.get('key')).toBe('value');
+  expect(store.has('key')).toBe(true);
+  store.forget('key');
+  expect(store.has('key')).toBe(false);
+});
 ```
 
 ## Browser tests
@@ -94,6 +208,48 @@ end-to-end coverage (`npm run test:browser`).
 ## Generated tests
 
 `js make:test WidgetTest` scaffolds a feature test file ready to fill in.
+
+## Common patterns
+
+### beforeEach / afterEach
+
+```ts
+import { beforeEach, describe, expect, it } from 'vitest';
+
+describe('Model', () => {
+  beforeEach(async () => {
+    await freshApp();
+  });
+
+  it('creates a record', async () => {
+    const user = await User.create({ name: 'Test', email: 't@t.com', password: 'x' });
+    expect(user.id).toBeDefined();
+  });
+});
+```
+
+### Asserting JSON responses
+
+```ts
+const response = await fetch(`${baseUrl}/api/users`);
+const data = await response.json();
+expect(response.status).toBe(200);
+expect(data).toHaveProperty('data');
+expect(Array.isArray(data.data)).toBe(true);
+```
+
+### Asserting redirects
+
+```ts
+const response = await fetch(`${baseUrl}/login`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrf },
+  body: new URLSearchParams({ email: 'a@b.com', password: 'secret' }).toString(),
+  redirect: 'manual',
+});
+expect(response.status).toBe(302);
+expect(response.headers.get('location')).toContain('/dashboard');
+```
 
 ## Next
 

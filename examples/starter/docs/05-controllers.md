@@ -60,6 +60,53 @@ export class ShowWelcome {
 Route.get('/', ShowWelcome);
 ```
 
+## Resource controllers
+
+A resource controller handles all CRUD operations for a model. Define the
+standard methods:
+
+```ts
+export class PostController {
+  public async index(request: Request) { /* list all posts */ }
+  public async create(request: Request) { /* show create form */ }
+  public async store(request: Request) { /* save new post */ }
+  public async show(request: Request, post: Post) { /* show single post */ }
+  public async edit(request: Request, post: Post) { /* show edit form */ }
+  public async update(request: Request, post: Post) { /* update post */ }
+  public async destroy(request: Request, post: Post) { /* delete post */ }
+}
+```
+
+Register with `Route.resource()`:
+
+```ts
+Route.resource('posts', PostController);
+// GET    /posts          → index
+// GET    /posts/create   → create
+// POST   /posts          → store
+// GET    /posts/:id      → show
+// GET    /posts/:id/edit → edit
+// PUT    /posts/:id      → update
+// DELETE /posts/:id      → destroy
+```
+
+### Selecting resource routes
+
+Only register specific actions:
+
+```ts
+Route.resource('posts', PostController).only(['index', 'show']);
+Route.resource('posts', PostController).except(['create', 'edit']);
+```
+
+## Generating controllers
+
+```bash
+js make:controller PostController
+js make:controller PostController --model Post     # with model hint
+js make:controller AuthController --invokable       # single-action (__invoke)
+```
+
 ## Controllers & middleware
 
 Attach middleware in the route definition (see [Routing](04-routing)) or

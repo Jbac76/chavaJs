@@ -22,6 +22,7 @@ see your changes.
 - **Security & identity** — [Authentication](13-auth), [Sessions & CSRF](14-sessions)
 - **Background work** — [Events](15-events), [Queues](16-queues), [Mail & Notifications](17-mail-notifications), [Scheduling](18-scheduling)
 - **Front end & tooling** — [Frontend](19-frontend), [Console](20-console), [Testing](21-testing), [Deployment](22-deployment)
+- **Framework reference** — [Service Container](23-container), [Support Utilities](24-support), [Facades](25-facades)
 
 ## Quick start
 

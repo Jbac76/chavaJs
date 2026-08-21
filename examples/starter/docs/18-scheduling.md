@@ -17,18 +17,66 @@ Schedule.job(new SendReportsJob()).dailyAt('02:00');
 Schedule.command('chava db:wipe').weeklyOn(0, '04:00'); // every Sunday 4am
 ```
 
+## Task types
+
+| Method | Description |
+|--------|-------------|
+| `Schedule.call(callback, name?)` | Run a closure on schedule |
+| `Schedule.job(job, name?)` | Dispatch a job instance |
+| `Schedule.command(command, name?)` | Run an artisan-style command |
+
 ## Frequency methods
 
 | Method | Meaning |
 | --- | --- |
 | `cron('* * * * *')` | any 5-field expression |
 | `everyMinute()` | `* * * * *` |
-| `everyTwoMinutes()` / `everyFiveMinutes()` / `everyTenMinutes()` / `everyFifteenMinutes()` / `everyThirtyMinutes()` | `*/n * * * *` |
-| `hourly()` / `hourlyAt(30)` | top of the hour / at minute 30 |
-| `daily()` / `dailyAt('13:00')` / `twiceDaily(1, 13)` | once or twice a day |
-| `weekly()` / `weeklyOn(1, '08:30')` | weekly (day 0-6, Sunday=0) |
-| `monthly()` / `monthlyOn(1, '10:00')` | monthly |
-| `yearly()` | Jan 1 |
+| `everyTwoMinutes()` | `*/2 * * * *` |
+| `everyFiveMinutes()` | `*/5 * * * *` |
+| `everyTenMinutes()` | `*/10 * * * *` |
+| `everyFifteenMinutes()` | `*/15 * * * *` |
+| `everyThirtyMinutes()` | `*/30 * * * *` |
+| `hourly()` | top of the hour |
+| `hourlyAt(30)` | at minute 30 |
+| `daily()` | once a day at midnight |
+| `dailyAt('13:00')` | once a day at 1:00 PM |
+| `twiceDaily(1, 13)` | at 1:00 AM and 1:00 PM |
+| `weekly()` | once a week (Sunday) |
+| `weeklyOn(1, '08:30')` | Monday at 8:30 AM |
+| `monthly()` | once a month (1st at midnight) |
+| `monthlyOn(1, '10:00')` | 1st of month at 10:00 AM |
+| `yearly()` | January 1st at midnight |
+
+## Conditional scheduling
+
+Only run a task when a condition is true:
+
+```ts
+Schedule.call(() => {
+  // runs only in production
+}, 'prod-cleanup').daily().when(() => process.env.APP_ENV === 'production');
+```
+
+## Timezone support
+
+```ts
+Schedule.call(() => {
+  // runs at 3:00 AM Eastern
+}, 'us-cleanup').dailyAt('03:00').timezone('America/New_York');
+```
+
+## Chaining frequency modifiers
+
+Combine modifiers for more complex schedules:
+
+```ts
+// weekdays at 9am
+Schedule.command('reports:generate').dailyAt('09:00').weekdays();
+
+// every hour between 9am and 5pm
+Schedule.call(() => checkQueue(), 'queue-monitor')
+  .cron('0 9-17 * * 1-5');
+```
 
 ## Running the scheduler
 
