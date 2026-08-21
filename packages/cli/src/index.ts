@@ -36,6 +36,8 @@ import { queueListenCommand } from './commands/queue-listen';
 import { queueFlushCommand, queueRetryCommand } from './commands/queue-retry';
 import { queueWorkCommand } from './commands/queue-work';
 import { routeListCommand } from './commands/route-list';
+import { routeCacheCommand } from './commands/route-cache';
+import { routeClearCommand } from './commands/route-clear';
 import { scheduleListCommand, scheduleRunCommand } from './commands/schedule-run';
 import { serveCommand } from './commands/serve';
 import { tinkerCommand } from './commands/tinker';
@@ -50,6 +52,8 @@ export async function run(): Promise<void> {
   program.addCommand(aboutCommand());
   program.addCommand(serveCommand());
   program.addCommand(routeListCommand());
+  program.addCommand(routeCacheCommand());
+  program.addCommand(routeClearCommand());
   program.addCommand(migrateCommand());
   program.addCommand(migrateRollbackCommand());
   program.addCommand(migrateFreshCommand());

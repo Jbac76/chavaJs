@@ -1,5 +1,6 @@
 import { BindingResolutionException, RuntimeException } from '../support/exceptions';
 import { capitalize, isClass, paramNamesOf, type ParamInfo } from '../support/reflect';
+import { getInjectMetadata } from './inject';
 
 interface Binding {
   concrete: unknown;
@@ -167,7 +168,19 @@ export class Container {
   private build(ctor: new (...args: unknown[]) => unknown, overrides: Record<string, unknown>): unknown {
     const params = this.paramNamesOf(ctor);
     const target = ctor.name;
-    const args = params.map((info) => {
+
+    // Check for @inject metadata first (explicit DI)
+    const injectMeta = getInjectMetadata(ctor);
+    const args = params.map((info, index) => {
+      // @inject overrides parameter-name resolution
+      const injectBinding = injectMeta?.get(index);
+      if (injectBinding !== undefined) {
+        if (this.bound(injectBinding)) return this.make(injectBinding);
+        throw new BindingResolutionException(
+          `@inject('${injectBinding}') resolved no binding. Register it with app.bind('${injectBinding}', ...).`,
+        );
+      }
+
       // Contextual bindings win over everything (Laravel semantics).
       const contextual = this.contextualBinding(target, info.name);
       if (contextual !== undefined) {

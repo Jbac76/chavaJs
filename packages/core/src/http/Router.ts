@@ -5,6 +5,8 @@ import { singularize } from './uri';
 import { Route } from './Route';
 import { RouteRegistrar } from './RouteRegistrar';
 import type { ExpandedMiddleware, HttpMethod, MiddlewareEntry, Newable, RouteAction, RouteAttributes } from './types';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 
 export type RouteMatch =
   | { route: Route; params: Record<string, string | undefined> }
@@ -286,5 +288,61 @@ export class Router {
 
   public get appInstance(): Application {
     return this.app;
+  }
+
+  // ---------------------------------------------------------- route caching
+
+  /**
+   * Export the current route table to a JSON-serializable cache object.
+   * Each route stores its methods, URI, action (class name + method for
+   * array actions, null for closures), name, and middleware.
+   */
+  public exportCache(): object[] {
+    return this.routeList.map((route) => ({
+      methods: route.methods,
+      uri: route.uri,
+      action: Array.isArray(route.action)
+        ? { controller: route.action[0].name, method: route.action[1] }
+        : null,
+      name: route.getName() ?? null,
+      middleware: route.getMiddleware(),
+    }));
+  }
+
+  /**
+   * Load routes from a cached JSON file, bypassing route file registration.
+   * Returns true if the cache was loaded, false if the file doesn't exist.
+   */
+  public async loadCache(cachePath: string): Promise<boolean> {
+    try {
+      const content = await fs.readFile(cachePath, 'utf-8');
+      const cached = JSON.parse(content) as Array<{
+        methods: HttpMethod[];
+        uri: string;
+        action: { controller: string; method: string } | null;
+        name: string | null;
+        middleware: MiddlewareEntry[];
+      }>;
+
+      // Clear existing routes
+      this.routeList.length = 0;
+
+      for (const entry of cached) {
+        // Store the action info as a string-based marker; the kernel resolves
+        // the controller class from the container at dispatch time.
+        // We store as `[controllerName, methodName]` — the kernel handles it.
+        const action: RouteAction = entry.action
+          ? [entry.action.controller as unknown as new (...args: unknown[]) => unknown, entry.action.method]
+          : (() => {});
+        const route = new Route(entry.methods, entry.uri, action, {});
+        if (entry.name) route.name(entry.name);
+        if (entry.middleware?.length) route.middleware(...entry.middleware);
+        this.routeList.push(route);
+      }
+
+      return true;
+    } catch {
+      return false;
+    }
   }
 }

@@ -112,14 +112,15 @@ assembled into its own `src/` + `bin/`, exactly like a scaffolded Laravel app
 bundles its framework.
 
 - **Service container** with automatic constructor injection, `bind` /
-  `singleton` / `instance` / `alias`, and `call()` method injection
+  `singleton` / `instance` / `alias`, `call()` method injection, and
+  `@inject('binding')` decorator for explicit DI
 - **Facades** as Proxy singletons: `Route`, `Inertia`, `Config`, `App`, `DB`,
   `Schema`, `Env`, `Auth`, `Hash`, `Gate`, `Session`, `Event`, `Queue`,
-  `Mail`, `Notification`, `Schedule`
+  `Mail`, `Notification`, `Schedule`, `Storage`
 - **Config system**: `config/*.ts` + `.env` loading, `Config.get('app.name')`
 - **Router**: `Route.get()`, `.post()`, `.resource()`, `.group()`, prefixes,
   named routes, optional params, `where()` constraints, route model binding,
-  404/405
+  404/405, route caching (`route:cache` / `route:clear`)
 - **Middleware pipeline**: `handle(request, next)` with `web` / `api` groups
 - **Eloquent-equivalent ORM**: migrations + Blueprint schema builder,
   Active Record `Model` (casts, fillable, timestamps, soft deletes, events),
@@ -146,12 +147,22 @@ bundles its framework.
   `Notifiable` models, unread/read tracking
 - **Scheduling**: fluent `Schedule` facade (`everyMinute`, `dailyAt`,
   `between()`, `cron()`), `chava schedule:run` / `schedule:list`
+- **File Storage**: `Storage` facade with local disk driver, configurable
+  disks (`config/filesystem.ts`), `get` / `put` / `delete` / `exists` /
+  `copy` / `move` / `stat` / `files` / `allFiles` / `url` / `path`
+- **Localization**: `__()` / `trans()` translation helpers, JSON-based
+  `lang/*.json` files, dot-notated keys, placeholder interpolation,
+  fallback locales
+- **Security**: parameterized SQL queries, CSRF protection, signed session
+  cookies, HttpOnly/Secure/SameSite, request body size limits (413),
+  APP_KEY enforcement in production, mass assignment protection, `npm audit`
+  in CI
 - **Inertia server adapter**: `Inertia.render('Home', props)` with the full
   protocol (versioning, partial reloads, shared props incl. `auth.user`)
-- **CLI**: `chava serve`, `route:list`, `migrate`, `migrate:rollback`,
-  `migrate:fresh`, `migrate:status`, `db:seed`, `queue:work`,
-  `queue:listen`, `schedule:run`, `schedule:list`, `tinker`, `make:model`,
-  `make:migration`, `make:factory`, `make:seeder`, `make:request`,
+- **CLI**: `chava serve`, `route:list`, `route:cache`, `route:clear`,
+  `migrate`, `migrate:rollback`, `migrate:fresh`, `migrate:status`, `db:seed`,
+  `queue:work`, `queue:listen`, `schedule:run`, `schedule:list`, `tinker`,
+  `make:model`, `make:migration`, `make:factory`, `make:seeder`, `make:request`,
   `make:policy`, `make:event`, `make:listener`, `make:job`,
   `make:notification`, `make:mail`, `make:controller` (`--resource`,
   `--api`, `--invokable`), `make:middleware`, `make:test`
@@ -166,8 +177,8 @@ bundles its framework.
   a ready-to-run app (assembles the framework from `packages/*`, regenerates
   `.env`, pins the package, prompts for database/auth/package-manager)
 - **Playwright browser tests** (Dusk-equivalent) against a dedicated test
-  database, plus **GitHub Actions CI** (typecheck + tests ×3 engines + build +
-  browser + installer boot-check)
+  database, plus **GitHub Actions CI** (typecheck + audit + tests ×3 engines +
+  build + browser + installer boot-check)
 
 ---
 
@@ -1809,6 +1820,8 @@ equivalent — it runs the app's own bundled CLI), or globally with
 | `new <name>`               | `--database=sqlite\|postgres\|mysql`, `--auth` / `--no-auth`, `--docs` / `--no-docs`, `--package-manager=npm\|pnpm\|yarn`, `--skip-install`, `--framework <path>`, `--core-version <version>` | Scaffold a new app (provided by `@chavajs/installer`, not the console)         |
 | `serve`                    | `-p, --port <port>` (default 8080), `-H, --host <host>` (default 127.0.0.1), `--no-vite`                                                                                                      | Dev server (+ Vite unless disabled); auto-moves to the next free port if taken |
 | `route:list`               | —                                                                                                                                                                                             | Print the route table (method, URI, action)                                    |
+| `route:cache`              | —                                                                                                                                                                                             | Cache the route table for faster boot                                          |
+| `route:clear`              | —                                                                                                                                                                                             | Clear the cached route table                                                   |
 | `migrate`                  | —                                                                                                                                                                                             | Run pending migrations                                                         |
 | `migrate:rollback`         | —                                                                                                                                                                                             | Undo the last migration batch                                                  |
 | `migrate:reset`            | —                                                                                                                                                                                             | Roll back every migration                                                      |
@@ -2054,6 +2067,9 @@ Scheduled tasks need a cron entry that runs `schedule:run` every minute:
 | `php artisan tinker`                                     | `chava tinker`                                        |
 | `php artisan queue:listen`                               | `chava queue:listen`                                  |
 | `Route::get('/x', InvokableController::class)`           | `Route.get('/x', InvokableController)` (`__invoke`)   |
+| `Storage::disk('local')->put('f.txt', $c)`              | `Storage.disk('local').put('f.txt', c)`               |
+| `__('welcome', ['name' => 'John'])`                      | `await __('welcome', { name: 'John' })`              |
+| `Route::cache()` / `Route::clear()`                     | `chava route:cache` / `chava route:clear`             |
 | Listener implements `ShouldQueue`                        | `class X extends ShouldQueue` (runs as a queued job)  |
 | `$user->notifications` inbox + `markAsRead()`            | `/notifications` page + `markAsRead()`                |
 | `Hash::make($pw)` / `Hash::check($pw, $h)`               | `Hash.make(pw)` / `Hash.check(pw, h)` (scrypt)        |

@@ -19,10 +19,10 @@ see your changes.
 - **Getting started** — [Installation](01-installation), [Configuration](02-configuration), [Architecture](03-architecture)
 - **HTTP layer** — [Routing](04-routing), [Controllers](05-controllers), [Requests](06-requests), [Validation](07-validation), [Middleware](08-middleware)
 - **Database & ORM** — [Database](09-database), [Migrations](10-migrations), [Eloquent ORM](11-eloquent), [Seeding](12-seeding)
-- **Security & identity** — [Authentication](13-auth), [Sessions & CSRF](14-sessions)
+- **Security & identity** — [Authentication](13-auth), [Sessions & CSRF](14-sessions), [Security](26-security)
 - **Background work** — [Events](15-events), [Queues](16-queues), [Mail & Notifications](17-mail-notifications), [Scheduling](18-scheduling)
 - **Front end & tooling** — [Frontend](19-frontend), [Console](20-console), [Testing](21-testing), [Deployment](22-deployment)
-- **Framework reference** — [Service Container](23-container), [Support Utilities](24-support), [Facades](25-facades)
+- **Framework reference** — [Service Container](23-container), [Support Utilities](24-support), [Facades](25-facades), [Security](26-security), [File Storage](27-filesystem), [Localization](28-localization)
 
 ## Quick start
 

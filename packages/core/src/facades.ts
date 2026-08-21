@@ -14,14 +14,16 @@ import type { MailManager } from './mail/MailManager';
 import type { NotificationManager } from './notifications/NotificationManager';
 import type { Scheduler as SchedulerService } from './scheduling/Scheduler';
 import type { Inertia as InertiaService } from './inertia/Inertia';
+import type { StorageManager } from './storage/StorageManager';
 
 /**
  * Facades — Laravel's static accessors, ported as Proxy-based singletons:
  *
- *   import { Route, Inertia, Config } from '../src/facades';
+ *   import { Route, Inertia, Config, Storage } from '../src/facades';
  *   Route.get('/', [HomeController, 'index']);
  *   Inertia.render('Pages/Home', { ... });
  *   Config.get('app.name');
+ *   await Storage.disk('local').put('file.txt', 'hello');
  */
 export const App = facade<Application>('app');
 export const Config = facade<ConfigService>('config');
@@ -37,4 +39,5 @@ export const Mail = facade<MailManager>('mail');
 export const Notification = facade<NotificationManager>('notifications');
 export const Schedule = facade<SchedulerService>('schedule');
 export const Inertia = facade<InertiaService>('inertia');
+export const Storage = facade<StorageManager>('storage');
 export { Env };

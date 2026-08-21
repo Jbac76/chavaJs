@@ -22,6 +22,7 @@ export {
   Notification,
   Schedule,
   Inertia,
+  Storage,
   Env,
 } from './facades';
 
@@ -30,6 +31,7 @@ export { Container } from './container/Container';
 export type { ContextualBindingBuilder } from './container/Container';
 export { facade } from './container/Facade';
 export { ServiceProvider } from './container/ServiceProvider';
+export { inject, getInjectMetadata } from './container/inject';
 
 // HTTP
 export { Controller } from './http/Controller';
@@ -102,8 +104,15 @@ export {
 export { getPath, hasPath, deepMerge } from './support/dot';
 export { isClass, paramNamesOf } from './support/reflect';
 
+// Localization
+export { __, trans, getLocale, setLocale, getFallbackLocale, setFallbackLocale } from './localization/Translator';
+
 // Config
 export type { Config as ConfigService } from './config/Config';
+
+// Storage
+export type { StorageManager } from './storage/StorageManager';
+export type { Filesystem } from './storage/Filesystem';
 
 // Inertia
 export type { Inertia as InertiaService } from './inertia/Inertia';
