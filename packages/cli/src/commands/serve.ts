@@ -1,6 +1,9 @@
 import type { ChildProcess } from 'node:child_process';
 import type { Server } from 'node:http';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { Command } from 'commander';
+import type { Router } from '../../http/Router';
 import { bootApp } from '../helpers/boot-app';
 import { maybeStartVite } from '../helpers/vite';
 
@@ -19,6 +22,18 @@ export function serveCommand(): Command {
     .action(async (options: ServeOptions) => {
       const app = await bootApp();
       await app.bootstrap();
+
+      // Production route cache (Laravel: config route_cache). Local always
+      // registers fresh; prod loads the cached table, auto-invalidating when
+      // the routes directory hash no longer matches.
+      if (!app.isLocal()) {
+        const cachePath = join(app.basePathDir(), 'bootstrap', 'route-cache.json');
+        if (existsSync(cachePath)) {
+          const router = app.make<Router>('router');
+          const loaded = await router.loadCache(cachePath);
+          if (loaded) console.log('  > Using cached routes.');
+        }
+      }
 
       let viteChild: ChildProcess | null = null;
       if (options.vite !== false) {
@@ -40,11 +55,32 @@ export function serveCommand(): Command {
         }
       }
 
+      let shuttingDown = false;
       const shutdown = (signal: string): void => {
-        console.log(`\n  INFO  ${signal} received — shutting down.`);
-        server?.close();
-        viteChild?.kill();
-        process.exit(0);
+        if (shuttingDown) return;
+        shuttingDown = true;
+        console.log(`\n  INFO  ${signal} received — draining connections…`);
+
+        // Force-exit safety net: never hang a deploy longer than 30s.
+        const forced = setTimeout(() => {
+          console.error('  WARN  Forced shutdown (connections did not drain in 30s).');
+          process.exit(1);
+        }, 30_000);
+        forced.unref();
+
+        // Stop accepting new connections; wait for in-flight requests.
+        server?.close(async () => {
+          await app.shutdown();
+          viteChild?.kill();
+          console.log('  INFO  Shutdown complete.');
+          process.exit(0);
+        });
+
+        // server.close() callback never fires while keep-alive sockets are
+        // open — drop idle keep-alive clients after a short grace period.
+        setTimeout(() => {
+          server?.closeIdleConnections?.();
+        }, 2_000).unref();
       };
       process.on('SIGINT', () => shutdown('SIGINT'));
       process.on('SIGTERM', () => shutdown('SIGTERM'));

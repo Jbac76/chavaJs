@@ -50,6 +50,8 @@ export class StartSession {
     const signed = request.cookie(cookieName);
     const id = signed ? verifySignature(signed, key) : undefined;
     const store = manager.store(id ?? undefined);
+    // Server-side idle expiry uses the same lifetime as the cookie.
+    store.configure(Number(config.get('session.lifetime', 120)) || 0);
     store.load();
     request.setSession(store);
 

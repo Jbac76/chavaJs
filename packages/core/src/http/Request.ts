@@ -3,6 +3,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import type { IncomingMessage } from 'node:http';
 import { URL } from 'node:url';
 import { currentApp } from '../foundation/registry';
+import type { Config } from '../config/Config';
 import type { Model } from '../orm/Model';
 import type { SessionStore } from '../session/SessionStore';
 import type { AuthManager } from '../auth/AuthManager';
@@ -15,8 +16,7 @@ import { parseMultipart } from './multipart';
 
 const MAX_BODY_SIZE = 10 * 1024 * 1024; // 10 MB
 
-export class UploadedFile {
-  /** The original client filename (Laravel: getClientOriginalName()). */
+export class UploadedFile {  /** The original client filename (Laravel: getClientOriginalName()). */
   public readonly name: string;
   /** The MIME type sent by the client. */
   public readonly type: string;
@@ -52,20 +52,78 @@ export class UploadedFile {
   /**
    * Store the file under `storage/app/<directory>` and return the relative
    * path (Laravel: $file->store('avatars')). The name is a UUID with the
-   * original extension preserved.
+  /**
+   * Store the file under `storage/app/<directory>` and return the relative
+   * path (Laravel: $file->store('avatars')). The name is a UUID with a
+   * sanitized extension preserved.
+   *
+   * Server-side validation runs before anything touches disk:
+   *  - MIME type must be in the allow-list (`options.allowedMimes` overrides
+   *    `uploads.allowed_mimes` config; default: images + PDF — SVG excluded
+   *    because served SVG can execute script),
+   *  - size cap via `options.maxSizeBytes` / `uploads.max_size_bytes`
+   *    (default 10 MB),
+   *  - the client-supplied extension is stripped to bare alphanumerics so it
+   *    can never introduce path segments or double extensions.
    */
-  public store(directory: string): string {
+  public store(
+    directory: string,
+    options: { allowedMimes?: readonly string[]; maxSizeBytes?: number } = {},
+  ): string {
+    // Validate BEFORE resolving the app so bad uploads fail fast and cheaply.
+    const runValidation = (allowed: readonly string[], maxSizeBytes: number): void => {
+      if (allowed.length > 0 && !allowed.includes(this.type)) {
+        const reason = `File type "${this.type}" is not allowed. Allowed types: ${allowed.join(', ')}.`;
+        throw new ValidationException({ file: [reason] }, reason);
+      }
+      if (this.size > maxSizeBytes) {
+        const reason = `File is too large. Maximum size is ${Math.floor(maxSizeBytes / 1024)} KB.`;
+        throw new ValidationException({ file: [reason] }, reason);
+      }
+    };
+
+    // Fast path: fully explicit options need no application context.
+    const explicitAllowed = options.allowedMimes;
+    const explicitMax = options.maxSizeBytes;
+    if (explicitAllowed !== undefined && explicitMax !== undefined) {
+      runValidation(explicitAllowed, explicitMax);
+    }
+
     const app = currentApp();
-    const extension = this.name.includes('.') ? this.name.split('.').pop() : '';
-    const filename = `${randomUUID().replaceAll('-', '')}${extension ? `.${extension}` : ''}`;
+    let config: Config | undefined;
+    try {
+      config = app.make<Config>('config');
+    } catch {
+      // Config unavailable in edge contexts — fall back to built-in defaults.
+    }
+
+    runValidation(
+      explicitAllowed
+        ?? config?.get<readonly string[]>('uploads.allowed_mimes')
+        ?? DEFAULT_ALLOWED_MIMES,
+      explicitMax ?? config?.get<number>('uploads.max_size_bytes') ?? MAX_BODY_SIZE,
+    );
+
+    const rawExtension = this.name.includes('.') ? this.name.split('.').pop()! : '';
+    const safeExtension = rawExtension.replace(/[^A-Za-z0-9]/g, '').slice(0, 10);
+    const filename = `${randomUUID().replaceAll('-', '')}${safeExtension ? `.${safeExtension}` : ''}`;
     const relative = `${directory.replace(/^\/+|\/+$/g, '')}/${filename}`;
     const fullPath = app.storagePath('app', ...relative.split('/'));
-    mkdirSync(fullPath.replace(/\/[^/]+$/, ''), { recursive: true });
+    mkdirSync(fullPath.replace(/[/\\][^/\\]+$/, ''), { recursive: true });
     writeFileSync(fullPath, this.content);
     this.tempPath = relative;
     return relative;
   }
 }
+
+/** Default upload MIME allow-list (SVG deliberately excluded — XSS vector). */
+const DEFAULT_ALLOWED_MIMES: readonly string[] = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'application/pdf',
+];
 
 const SPOOFABLE_METHODS = new Set(['PUT', 'PATCH', 'DELETE']);
 
@@ -225,6 +283,17 @@ export class Request {
 
   public method(): string {
     return this.httpMethod;
+  }
+
+  /** Correlation id for log aggregation (review 4.1). Set by the kernel. */
+  private requestIdValue: string | undefined;
+
+  public requestId(): string | undefined {
+    return this.requestIdValue;
+  }
+
+  public setRequestId(id: string): void {
+    this.requestIdValue = id;
   }
 
   public isMethod(method: string): boolean {

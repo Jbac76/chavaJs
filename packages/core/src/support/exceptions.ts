@@ -31,6 +31,8 @@ export class MethodNotAllowedException extends RuntimeException {
 
 export class ValidationException extends RuntimeException {
   public readonly errors: Record<string, string[]>;
+  /** The original submitted input, attached by the kernel before responding. */
+  public input?: Record<string, unknown>;
 
   public constructor(errors: Record<string, string[]>, message = 'The given data was invalid.') {
     super(message);

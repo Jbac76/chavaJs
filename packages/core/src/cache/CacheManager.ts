@@ -33,12 +33,30 @@ interface CacheEntry<T> {
 export class MemoryCacheDriver implements CacheDriver {
   private store = new Map<string, CacheEntry<unknown>>();
   private cleanupInterval: NodeJS.Timeout;
+  /** TTL (seconds) applied by increment/decrement when re-putting counters. */
+  public defaultTtl = 3600;
 
   constructor() {
-    // Clean up expired entries every 60 seconds
+    // Clean up expired entries every 60 seconds. unref'd so a live cache can
+    // never keep the process alive on shutdown.
     this.cleanupInterval = setInterval(() => {
       this.cleanup();
     }, 60000);
+    this.cleanupInterval.unref();
+  }
+
+  /**
+   * Stop the cleanup timer and drop all entries. Call on application
+   * shutdown — prevents timer leaks across hot reloads / test runs.
+   */
+  public destroy(): void {
+    clearInterval(this.cleanupInterval);
+    this.store.clear();
+  }
+
+  /** Alias of destroy() kept for backward compatibility. */
+  public stopCleanup(): void {
+    this.destroy();
   }
 
   public async get<T = unknown>(key: string): Promise<T | undefined> {
@@ -77,7 +95,7 @@ export class MemoryCacheDriver implements CacheDriver {
   public async increment(key: string, value = 1): Promise<number> {
     const current = await this.get<number>(key);
     const newValue = (current || 0) + value;
-    await this.put(key, newValue, 3600); // Default 1 hour TTL
+    await this.put(key, newValue, this.defaultTtl);
     return newValue;
   }
 
@@ -98,10 +116,6 @@ export class MemoryCacheDriver implements CacheDriver {
     for (const key of toDelete) {
       this.store.delete(key);
     }
-  }
-
-  public stopCleanup(): void {
-    clearInterval(this.cleanupInterval);
   }
 }
 
@@ -195,6 +209,28 @@ export class CacheManager {
       // Default to memory driver
       this.driver = new MemoryCacheDriver();
     }
+  }
+
+  /**
+   * Configure the TTL (seconds) used by increment/decrement counters
+   * (review: hardcoded 1h caused premature rate-limit resets).
+   */
+  public setDefaultTtl(seconds: number): this {
+    const driver = this.driver as { defaultTtl?: number };
+    if (typeof driver.defaultTtl === 'number') {
+      driver.defaultTtl = seconds;
+    }
+    return this;
+  }
+
+  /**
+   * Tear down the underlying driver (stops timers, closes connections).
+   * Called from Application.shutdown().
+   */
+  public async destroy(): Promise<void> {
+    const driver = this.driver as Partial<MemoryCacheDriver & RedisCacheDriver>;
+    if (typeof driver.destroy === 'function') driver.destroy();
+    if (typeof driver.disconnect === 'function') await driver.disconnect();
   }
 
   /**

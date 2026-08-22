@@ -100,7 +100,8 @@ export class DatabaseDriver implements QueueDriver {
 
     if (attempts < maxTries) {
       // Backoff: push available_at into the future and release the reservation.
-      const backoff = job.backoff;
+      // Per-attempt delays when the job declares an array (Laravel-style).
+      const backoff = job.getBackoffDelay(attempts);
       const now = Math.floor(Date.now() / 1000);
       await this.manager.table(this.table)
         .where('id', id)

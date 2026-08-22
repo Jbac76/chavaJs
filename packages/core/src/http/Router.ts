@@ -310,19 +310,72 @@ export class Router {
   }
 
   /**
+   * SHA-256 over every file in the routes directory (sorted by relative
+   * path) — the fingerprint used to detect stale caches (review 3.1).
+   */
+  public async computeRoutesHash(routesDir?: string): Promise<string> {
+    const { createHash } = await import('node:crypto');
+    const dir = routesDir ?? this.app?.routesPath?.() ?? path.join(process.cwd(), 'routes');
+    const hash = createHash('sha256');
+    const walk = async (current: string, prefix: string): Promise<void> => {
+      let entries: import('node:fs').Dirent[];
+      try {
+        entries = await fs.readdir(current, { withFileTypes: true });
+      } catch {
+        return;
+      }
+      for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+        const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+        const full = join(current, entry.name);
+        if (entry.isDirectory()) {
+          await walk(full, rel);
+        } else if (entry.isFile()) {
+          hash.update(rel);
+          hash.update(await fs.readFile(full));
+        }
+      }
+    };
+    await walk(dir, '');
+    return hash.digest('hex');
+  }
+
+  /** Cache-file envelope written by `route:cache` and understood by loadCache. */
+  public async exportCacheWithMeta(): Promise<{ hash: string; exportedAt: number; routes: object[] }> {
+    return {
+      hash: await this.computeRoutesHash(),
+      exportedAt: Date.now(),
+      routes: this.exportCache(),
+    };
+  }
+
+  /**
    * Load routes from a cached JSON file, bypassing route file registration.
-   * Returns true if the cache was loaded, false if the file doesn't exist.
+   * Accepts both the wrapped `{ hash, routes }` envelope and the legacy bare
+   * array. When the envelope's hash no longer matches the current routes
+   * directory the cache is stale: it is deleted (with a warning) and this
+   * returns false so callers fall back to fresh registration.
+   * Returns true if valid cache was loaded, false otherwise.
    */
   public async loadCache(cachePath: string): Promise<boolean> {
     try {
       const content = await fs.readFile(cachePath, 'utf-8');
-      const cached = JSON.parse(content) as Array<{
-        methods: HttpMethod[];
-        uri: string;
-        action: { controller: string; method: string } | null;
-        name: string | null;
-        middleware: MiddlewareEntry[];
-      }>;
+      const parsed = JSON.parse(content) as
+        | Array<{ methods: HttpMethod[]; uri: string; action: { controller: string; method: string } | null; name: string | null; middleware: MiddlewareEntry[] }>
+        | { hash?: string; routes?: Array<{ methods: HttpMethod[]; uri: string; action: { controller: string; method: string } | null; name: string | null; middleware: MiddlewareEntry[] }> };
+
+      const isEnvelope = !Array.isArray(parsed);
+      const cached = isEnvelope ? parsed.routes ?? [] : parsed;
+      const cachedHash = isEnvelope ? parsed.hash : undefined;
+
+      // Stale-cache guard: routes changed since `route:cache` ran.
+      if (typeof cachedHash === 'string') {
+        const currentHash = await this.computeRoutesHash();
+        if (currentHash !== cachedHash) {
+          console.warn('  WARN  Route cache is stale (routes changed) — ignoring and deleting it.');
+          await fs.unlink(cachePath).catch(() => undefined);
+          return false;
+        }
+      }
 
       // Clear existing routes
       this.routeList.length = 0;

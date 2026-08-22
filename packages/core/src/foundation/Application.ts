@@ -226,6 +226,28 @@ export class Application {
     return server;
   }
 
+  /**
+   * Graceful teardown: stop cache timers, close database pools. Best-effort —
+   * every step swallows errors so one failing service never blocks shutdown.
+   * Call from SIGTERM/SIGINT handlers after the HTTP server has drained.
+   */
+  public async shutdown(): Promise<void> {
+    const tasks: Array<Promise<unknown>> = [];
+    try {
+      const cache = this.make<{ destroy: () => Promise<void> | void }>('cache');
+      tasks.push(Promise.resolve(cache.destroy()).catch(() => undefined));
+    } catch {
+      // Cache not bound (e.g. CLI commands) — nothing to clean.
+    }
+    try {
+      const db = this.make<{ closeAll: () => Promise<void> }>('db');
+      tasks.push(db.closeAll().catch(() => undefined));
+    } catch {
+      // DB not bound — nothing to clean.
+    }
+    await Promise.all(tasks);
+  }
+
   // --------------------------------------------------------------- paths
 
   public path(...segments: string[]): string {

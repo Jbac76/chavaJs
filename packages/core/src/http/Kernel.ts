@@ -1,4 +1,5 @@
 import { createReadStream, existsSync, statSync } from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import { extname, normalize, resolve, sep } from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Application } from '../foundation/Application';
@@ -6,6 +7,8 @@ import { runWithRequestContext } from '../foundation/request-context';
 import { isClass } from '../support/reflect';
 import { AuthorizationException, NotFoundException, RuntimeException, ValidationException } from '../support/exceptions';
 import { sessionCookieFor } from './middleware/StartSession';
+import { applyCors } from './middleware/HandleCors';
+import { Config } from '../config/Config';
 import { Pipeline } from './Pipeline';
 import { Request } from './Request';
 import { Response } from './Response';
@@ -28,6 +31,23 @@ export class HttpKernel {
     let request: Request | undefined;
     try {
       request = await Request.fromNode(req);
+
+      // Global CORS (Laravel's HandleCors): allowed origins get headers on
+      // every response; preflights terminate here before routing. Headers are
+      // set on the raw ServerResponse so they survive error paths too.
+      const cors = applyCors(request, res, this.app.make<Config>('config'));
+      if (cors === 'preflight') {
+        res.statusCode = 204;
+        res.end();
+        return;
+      }
+
+      // Request correlation id (review 4.1): honor inbound X-Request-ID,
+      // otherwise mint one; always echoed on the response for log joins.
+      const inboundId = request.header('x-request-id');
+      const requestId = inboundId && /^[\w-]{8,64}$/.test(inboundId) ? inboundId : randomUUID();
+      request.setRequestId(requestId);
+      res.setHeader('X-Request-ID', requestId);
 
       // Serve built assets from public/ (Laravel's public directory).
       if (request.method() === 'GET' && request.path().startsWith('/build/')) {
@@ -178,9 +198,10 @@ export class HttpKernel {
   }
 
   private abort(res: ServerResponse, request: Request, status: number, message: string): void {
+    const code = status === 404 ? 'not_found' : 'method_not_allowed';
     const response =
       request.expectsJson() || request.wantsJson()
-        ? Response.json({ message }, status)
+        ? this.errorResponse(status, code, message)
         : Response.html(`<h1>${status} ${message}</h1>`, status);
     response.toNode(res);
   }
@@ -196,14 +217,14 @@ export class HttpKernel {
     if (!request) {
       const message = error instanceof Error ? error.message : String(error);
       console.error(error);
-      const response = Response.json({ message: this.app.isDebug() ? message : 'Internal Server Error' }, 500);
+      const response = this.errorResponse(500, 'server_error', this.app.isDebug() ? message : 'Internal Server Error');
       response.toNode(res);
       return;
     }
 
     // Laravel's 404 for missing route-model bindings / findOrFail misses.
     if (error instanceof NotFoundException) {
-      const response = Response.json({ message: 'Not Found' }, 404);
+      const response = this.errorResponse(404, 'not_found', 'Not Found');
       this.attachSessionCookie(request, response);
       response.toNode(res);
       return;
@@ -215,9 +236,14 @@ export class HttpKernel {
     if (error instanceof RuntimeException && !(error instanceof ValidationException) && !(error instanceof AuthorizationException)) {
       const message = error instanceof Error ? error.message : String(error);
       const status = /exceed|limit|too large/i.test(message) ? 413 : 400;
-      const response = request.expectsJson() || request.wantsJson()
-        ? Response.json({ message }, status)
-        : Response.html(`<h1>${status} ${status === 413 ? 'Payload Too Large' : 'Bad Request'}</h1><p>${message}</p>`, status);
+      const code = status === 413 ? 'payload_too_large' : 'bad_request';
+      if (request.expectsJson() || request.wantsJson()) {
+        const response = this.errorResponse(status, code, message);
+        this.attachSessionCookie(request, response);
+        response.toNode(res);
+        return;
+      }
+      const response = Response.html(`<h1>${status} ${status === 413 ? 'Payload Too Large' : 'Bad Request'}</h1><p>${message}</p>`, status);
       this.attachSessionCookie(request, response);
       response.toNode(res);
       return;
@@ -226,6 +252,7 @@ export class HttpKernel {
     // ValidationException → 422 for JSON, redirect back for HTML/Inertia.
     if (error instanceof ValidationException) {
       const errors = error.errors;
+      error.input = request.all();
       const session = request.session();
       if (session) {
         session.flash('errors', errors);
@@ -233,7 +260,7 @@ export class HttpKernel {
         session.save();
       }
       if (request.expectsJson() || request.wantsJson()) {
-        const response = Response.json({ message: error.message, errors }, 422);
+        const response = this.errorResponse(422, 'validation_failed', error.message, { errors });
         this.attachSessionCookie(request, response);
         response.toNode(res);
         return;
@@ -249,21 +276,49 @@ export class HttpKernel {
     // AuthorizationException → 403 (Laravel aborts with Forbidden).
     if (error instanceof AuthorizationException) {
       const message = error instanceof Error ? error.message : 'This action is unauthorized.';
-      const response = request.expectsJson() || request.wantsJson()
-        ? Response.json({ message }, 403)
-        : Response.html(`<h1>403 Forbidden</h1><p>${message}</p>`, 403);
+      if (request.expectsJson() || request.wantsJson()) {
+        const response = this.errorResponse(403, 'forbidden', message);
+        this.attachSessionCookie(request, response);
+        response.toNode(res);
+        return;
+      }
+      const response = Response.html(`<h1>403 Forbidden</h1><p>${message}</p>`, 403);
       this.attachSessionCookie(request, response);
       response.toNode(res);
       return;
     }
 
-    console.error(error);
-    const payload = this.app.isDebug()
-      ? { message: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined }
-      : { message: 'Internal Server Error' };
-    const response = Response.json(payload, 500);
+    console.error(`[req:${request.requestId() ?? 'n/a'}]`, error);
+    const debugMessage = this.app.isDebug() ? (error instanceof Error ? error.message : String(error)) : undefined;
+    const stack = this.app.isDebug() && error instanceof Error ? error.stack : undefined;
+    const response = this.errorResponse(
+      500,
+      'server_error',
+      debugMessage ?? 'Internal Server Error',
+      stack ? { stack } : undefined,
+    );
     this.attachSessionCookie(request, response);
     response.toNode(res);
+  }
+
+  /**
+   * Consistent machine-readable error envelope (review 3.2). Every JSON
+   * error carries `error: { code, message, details? }`; the legacy top-level
+   * `message` is kept so existing clients don't break.
+   */
+  private errorResponse(
+    status: number,
+    code: string,
+    message: string,
+    details?: Record<string, unknown>,
+  ): Response {
+    return Response.json(
+      {
+        message,
+        error: { code, message, ...(details !== undefined ? { details } : {}) },
+      },
+      status,
+    );
   }
 
   /**

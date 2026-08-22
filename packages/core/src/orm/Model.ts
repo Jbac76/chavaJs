@@ -147,6 +147,8 @@ export class Model {
   protected _exists = false;
   protected _wasRecentlyCreated = false;
   protected _relations: Record<string, unknown> = {};
+  /** Memoized cast results per attribute (invalidated on write) — review 4.2. */
+  private _castCache = new Map<string, unknown>();
 
   /**
    * Dynamic per-attribute properties (`user.name`, `user.posts`) installed at
@@ -419,13 +421,18 @@ export class Model {
 
   private readAttribute(name: string): unknown {
     const raw = this._attributes[name];
-    const casted = this.castValue(name, raw);
+    let casted = this._castCache.get(name);
+    if (casted === undefined || !this._castCache.has(name)) {
+      casted = this.castValue(name, raw);
+      this._castCache.set(name, casted);
+    }
     const accessor = this.findAccessor(name);
     return accessor ? accessor.call(this, casted) : casted;
   }
 
   private setAttributeRaw(name: string, value: unknown): void {
     this._attributes[name] = value;
+    this._castCache.delete(name);
   }
 
   private castValue(name: string, value: unknown): unknown {

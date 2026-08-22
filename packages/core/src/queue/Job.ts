@@ -23,8 +23,14 @@ export abstract class Job {
   /** How many times to attempt the job before it fails (Laravel: $tries). */
   public tries = 3;
 
-  /** Seconds to wait before retrying after a failure (Laravel: $backoff). */
-  public backoff = 3;
+  /**
+   * Seconds to wait before retrying after a failure (Laravel: $backoff).
+   * A number applies the same delay to every retry; an array gives the delay
+   * per attempt (the last value repeats for further retries) — e.g.
+   * `[3, 15, 60]` waits 3s, then 15s, then 60s instead of hammering a
+   * struggling dependency at a constant rate.
+   */
+  public backoff: number | number[] = [3, 15, 60];
 
   /** Seconds after which the job is abandoned. */
   public timeout = 60;
@@ -37,6 +43,18 @@ export abstract class Job {
 
   /** The job's work. */
   public abstract handle(): Promise<unknown> | unknown;
+
+  /**
+   * Resolve the retry delay in seconds for the given (1-based) attempt count.
+   */
+  public getBackoffDelay(attempts: number): number {
+    if (Array.isArray(this.backoff)) {
+      if (this.backoff.length === 0) return 0;
+      const index = Math.min(Math.max(0, attempts - 1), this.backoff.length - 1);
+      return this.backoff[index] ?? this.backoff[this.backoff.length - 1] ?? 0;
+    }
+    return this.backoff;
+  }
 
   /** Serialize for a queue driver — class name + own data properties. */
   public serialize(): string {

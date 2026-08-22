@@ -122,4 +122,20 @@ export class DatabaseManager {
   public getConnectionNames(): string[] {
     return [...this.connections.keys()];
   }
+
+  /**
+   * Close every open connection pool. Called on application shutdown so
+   * SIGTERM deploys don't leave dangling sockets (review 2.5).
+   */
+  public async closeAll(): Promise<void> {
+    const closers: Array<Promise<void>> = [];
+    for (const connection of this.connections.values()) {
+      const closeable = connection as Partial<{ close: () => Promise<void> }>;
+      if (typeof closeable.close === 'function') {
+        closers.push(closeable.close().catch(() => undefined));
+      }
+    }
+    this.connections.clear();
+    await Promise.all(closers);
+  }
 }

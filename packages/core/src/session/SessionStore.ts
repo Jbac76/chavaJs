@@ -5,6 +5,7 @@ const FLASH_KEY = '_flash';
 const OLD_INPUT_KEY = '_old_input';
 const PREVIOUS_URL_KEY = '_previous_url';
 const TOKEN_KEY = '_token';
+const LAST_ACTIVITY_KEY = '_last_activity';
 
 interface FlashData {
   new: string[];
@@ -24,6 +25,9 @@ interface FlashData {
  */
 export class SessionStore {
   private data: Record<string, unknown> = {};
+  /** Idle lifetime in minutes; 0 disables expiry (Laravel: session.lifetime). */
+  private lifetimeMinutes = 0;
+  private expiredFlag = false;
 
   private constructor(
     private id: string,
@@ -38,6 +42,20 @@ export class SessionStore {
     return randomBytes(32).toString('hex');
   }
 
+  /**
+   * Set the idle lifetime (minutes) before load(). Stale sessions — including
+   * ones an attacker replays with an old cookie — are destroyed server-side.
+   * 0 (default) keeps pre-hardening behavior of cookie-only expiry.
+   */
+  public configure(lifetimeMinutes: number): void {
+    this.lifetimeMinutes = Number.isFinite(lifetimeMinutes) && lifetimeMinutes > 0 ? lifetimeMinutes : 0;
+  }
+
+  /** Whether load() found and rejected a stale session. */
+  public wasExpired(): boolean {
+    return this.expiredFlag;
+  }
+
   // ------------------------------------------------------------ lifecycle
 
   public getId(): string {
@@ -48,13 +66,25 @@ export class SessionStore {
   public load(): void {
     const saved = this.handler.read(this.id);
     this.data = saved ?? {};
+
+    // Server-side idle-timeout check: a stored payload older than the
+    // configured lifetime is destroyed, never resurrected.
+    if (this.isExpired()) {
+      this.expiredFlag = true;
+      this.handler.destroy(this.id);
+      this.data = {};
+    }
+
     // Aging happens on load: keys flashed last request were moved to `old`
     // and are forgotten now — they were readable for exactly one request.
     this.ageFlashData();
   }
 
-  /** Persist the session as-is. */
+  /** Persist the session, stamping last activity for the expiry check. */
   public save(): void {
+    if (this.lifetimeMinutes > 0) {
+      this.data[LAST_ACTIVITY_KEY] = Date.now();
+    }
     this.handler.write(this.id, this.data);
   }
 
@@ -206,5 +236,13 @@ export class SessionStore {
     const flash = this.flashData();
     for (const key of flash.old) delete this.data[key];
     this.data[FLASH_KEY] = { new: [], old: flash.new };
+  }
+
+  /** True when the stored `_last_activity` is older than the idle lifetime. */
+  private isExpired(): boolean {
+    if (this.lifetimeMinutes <= 0) return false;
+    const last = this.data[LAST_ACTIVITY_KEY];
+    if (typeof last !== 'number') return false; // no stamp yet — fresh/legacy
+    return Date.now() - last > this.lifetimeMinutes * 60_000;
   }
 }
