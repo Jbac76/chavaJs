@@ -15,6 +15,19 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { Command } from 'commander';
 import { fetchCore } from '../core';
+import {
+  printLogo,
+  printCongrats,
+  Progress,
+  Spinner,
+  summaryBox,
+  divider,
+  info,
+  success,
+  error,
+  radioGroup,
+  checkbox,
+} from '../ui';
 
 /**
  * `chava new <name>` — the Laravel Installer equivalent for chavaJs.
@@ -159,10 +172,9 @@ export function copyProjectTree(sourceDir: string, targetDir: string): void {
       mkdirSync(dirname(dest), { recursive: true });
       try {
         cpSync(src, dest);
-      } catch (error) {
-        const code = (error as NodeJS.ErrnoException).code;
-        if (code !== 'EBUSY' && code !== 'EPERM' && code !== 'EACCES') throw error;
-        console.warn(`  ! skipped locked file (${code}): ${rel}`);
+      } catch (err) {
+        const code = (err as NodeJS.ErrnoException).code;
+        if (code !== 'EBUSY' && code !== 'EPERM' && code !== 'EACCES') throw err;
       }
     }
   };
@@ -196,23 +208,33 @@ export function scaffoldProject(sourceDir: string, targetDir: string, name: stri
 
 // ------------------------------------------------------------------ prompts
 
-async function promptChoice(rl: ReturnType<typeof createInterface>, question: string, options: string[], fallback: string): Promise<string> {
+async function promptChoice(
+  rl: ReturnType<typeof createInterface>,
+  question: string,
+  options: string[],
+  fallback: string,
+  displayFn?: (opts: string[], fb: string) => void,
+): Promise<string> {
+  if (displayFn) {
+    displayFn(options, fallback);
+  }
   for (;;) {
-    const answer = (await rl.question(`${question} [${options.join(' | ')}] (${fallback}): `)).trim().toLowerCase();
+    const answer = (await rl.question(`  `)).trim().toLowerCase();
     if (answer === '') return fallback;
     if (options.includes(answer)) return answer;
-    console.log(`  (choose one of: ${options.join(', ')})`);
+    error(`Choose one of: ${options.join(', ')}`);
   }
 }
 
-async function promptYesNo(rl: ReturnType<typeof createInterface>, question: string, fallback: boolean): Promise<boolean> {
-  for (;;) {
-    const answer = (await rl.question(`${question} [y/N]: `)).trim().toLowerCase();
-    if (answer === '') return fallback;
-    if (['y', 'yes'].includes(answer)) return true;
-    if (['n', 'no'].includes(answer)) return false;
-    console.log('  (y / n)');
-  }
+async function promptYesNo(
+  rl: ReturnType<typeof createInterface>,
+  question: string,
+  fallback: boolean,
+): Promise<boolean> {
+  const symbol = fallback ? 'Y' : 'N';
+  const answer = (await rl.question(`  ${question} [${symbol}/${fallback ? 'n' : 'y'}]: `)).trim().toLowerCase();
+  if (answer === '') return fallback;
+  return ['y', 'yes'].includes(answer);
 }
 
 // ------------------------------------------------------------------ install
@@ -222,8 +244,8 @@ function installDeps(targetDir: string, packageManager: string): void {
   const args = packageManager === 'yarn' ? [] : ['install'];
   const result = spawnSync(command, args, { cwd: targetDir, stdio: 'inherit', shell: process.platform === 'win32' });
   if (result.status !== 0) {
-    console.error('\n  ✗ Dependency installation failed. You can retry manually:');
-    console.error(`    cd ${basename(targetDir)} && ${command} ${args.join(' ')}`);
+    error('Dependency installation failed.');
+    info(`Retry: cd ${basename(targetDir)} && ${command} ${args.join(' ')}`);
     process.exit(1);
   }
 }
@@ -251,7 +273,7 @@ async function resolveSourceRoots(opts: NewOptions): Promise<{ repoRoot: string 
   if (opts.framework) {
     const checkout = resolve(opts.framework);
     if (!existsSync(join(checkout, 'packages', 'core', 'src', 'foundation', 'Application.ts'))) {
-      throw new Error(`--framework path [${opts.framework}] is not a chavaJs checkout (no packages/core/src/foundation/Application.ts).`);
+      throw new Error(`--framework path [${opts.framework}] is not a chavaJs checkout.`);
     }
     return { repoRoot: checkout, pkgRoot: join(checkout, 'packages', 'cli') };
   }
@@ -266,8 +288,10 @@ async function resolveSourceRoots(opts: NewOptions): Promise<{ repoRoot: string 
   }
 
   // Otherwise download the framework from the registry.
-  console.log(`  Resolving @chavajs/core@${opts.coreVersion ?? 'latest'} from the npm registry…`);
+  const spinner = new Spinner(`Resolving @chavajs/core@${opts.coreVersion ?? 'latest'} from npm`);
+  spinner.start();
   const pkgRoot = await fetchCore(opts.coreVersion);
+  spinner.stop();
   return { repoRoot: null, pkgRoot };
 }
 
@@ -282,24 +306,28 @@ async function collectOptions(options: NewOptions): Promise<Required<Pick<NewOpt
   let packageManager = options.packageManager;
 
   if (!name) {
-    if (!rl) { console.error('  ✗ Please provide an application name: chava new <name>'); process.exit(1); }
-    name = (await rl.question('Application name: ')).trim();
+    if (!rl) { error('Please provide an application name: chava new <name>'); process.exit(1); }
+    name = (await rl.question('  Application name: ')).trim();
   }
-  if (!name) { console.error('  ✗ An application name is required.'); process.exit(1); }
+  if (!name) { error('An application name is required.'); process.exit(1); }
 
-  if (!database) database = rl ? await promptChoice(rl, 'Database engine', DB_ENGINES, 'sqlite') : 'sqlite';
+  if (!database) database = rl ? await promptChoice(rl, 'Database engine', DB_ENGINES, 'sqlite', (opts, fb) => {
+    radioGroup('Database engine', opts, fb);
+  }) : 'sqlite';
   if (!DB_ENGINES.includes(database)) {
-    console.error(`  ✗ Unknown database engine [${database}]. Choose: ${DB_ENGINES.join(', ')}`);
+    error(`Unknown database engine [${database}]. Choose: ${DB_ENGINES.join(', ')}`);
     process.exit(1);
   }
 
-  if (withAuth === undefined) withAuth = rl ? await promptYesNo(rl, 'Include the authentication UI (login / register / dashboard)?', true) : true;
+  if (withAuth === undefined) withAuth = rl ? await promptYesNo(rl, 'Include authentication UI (login / register / dashboard)?', true) : true;
 
-  if (includeDocs === undefined) includeDocs = rl ? await promptYesNo(rl, 'Include the framework documentation (served at /docs)?', true) : true;
+  if (includeDocs === undefined) includeDocs = rl ? await promptYesNo(rl, 'Include framework documentation (served at /docs)?', true) : true;
 
-  if (!packageManager) packageManager = rl ? await promptChoice(rl, 'Package manager', PACKAGE_MANAGERS, 'npm') : 'npm';
+  if (!packageManager) packageManager = rl ? await promptChoice(rl, 'Package manager', PACKAGE_MANAGERS, 'npm', (opts, fb) => {
+    radioGroup('Package manager', opts, fb);
+  }) : 'npm';
   if (!PACKAGE_MANAGERS.includes(packageManager)) {
-    console.error(`  ✗ Unknown package manager [${packageManager}]. Choose: ${PACKAGE_MANAGERS.join(', ')}`);
+    error(`Unknown package manager [${packageManager}]. Choose: ${PACKAGE_MANAGERS.join(', ')}`);
     process.exit(1);
   }
 
@@ -320,7 +348,27 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
     throw new Error(`Directory [${name}] already exists and is not empty.`);
   }
 
-  console.log(`\n  Scaffolding chavaJs app [${name}] (${database}, ${withAuth ? 'auth' : 'no auth'}, ${includeDocs ? 'docs' : 'no docs'}, ${packageManager})…`);
+  // Show logo and summary
+  printLogo();
+  summaryBox({ name, database, auth: withAuth, docs: includeDocs, packageManager });
+
+  // Progress steps
+  const steps = [
+    'Scaffolding framework core',
+    'Copying starter template',
+    includeDocs ? 'Copying framework docs' : null,
+    'Configuring database',
+    'Setting up authentication',
+    'Creating storage layout',
+    'Writing configuration',
+  ].filter(Boolean) as string[];
+
+  if (!opts.skipInstall) {
+    steps.push(`Installing dependencies with ${packageManager}`);
+  }
+
+  const progress = new Progress(steps);
+  progress.start();
 
   // 1. Framework core.
   if (standalone) {
@@ -330,26 +378,24 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
   } else {
     assembleFramework(repoRoot as string, targetDir);
   }
+  progress.step();
 
+  // 2. The maintained starter template.
   if (hasTemplate) {
-    // 2. The maintained starter template.
     copyTree(templateDir, targetDir);
   } else {
-    // No bundled template — clone the current application.
     copyProjectTree(process.cwd(), targetDir);
   }
+  progress.step();
 
   // 2b. Framework documentation (served at /docs when opted in).
   if (includeDocs) {
-    // The framework root that carries the docs/: the @chavajs/core dist (which
-    // ships a top-level docs/) or the canonical packages/core in a checkout.
     const docsSource = standalone ? pkgRoot : join(repoRoot as string, 'packages', 'core');
-    if (copyDocs(docsSource, targetDir)) {
-      console.log('  ✓ docs ← framework documentation (served at /docs)');
-    }
+    copyDocs(docsSource, targetDir);
+    progress.step();
   }
 
-  // 3. Apply choices.
+  // 3. Apply choices — database config.
   const pkg = JSON.parse(readFileSync(join(targetDir, 'package.json'), 'utf8')) as {
     name: string;
     dependencies: Record<string, string>;
@@ -365,6 +411,7 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
     .replace(/^DB_DATABASE=.*$/m, `DB_DATABASE=${database === 'sqlite' ? 'database/database.sqlite' : 'chava'}`);
   writeFileSync(join(targetDir, '.env.example'), envExample);
   writeFileSync(join(targetDir, '.env'), envExample);
+  progress.step();
 
   // 4. Auth toggle: strip the auth UI, controllers and routes.
   if (!withAuth) {
@@ -376,6 +423,7 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
       writeFileSync(join(targetDir, 'routes', 'web.ts'), readFileSync(noauthRoutes));
     }
   }
+  progress.step();
 
   // 5. Storage layout for the fresh app.
   for (const dir of STORAGE_DIRS) {
@@ -383,25 +431,19 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
     writeFileSync(join(targetDir, 'storage', ...dir.split('/'), '.gitkeep'), '');
   }
   rmSync(join(targetDir, 'database', 'database.sqlite'), { force: true });
+  progress.step();
 
-  console.log(`\n  ✓ chavaJs app [${name}] scaffolded into ./${name}`);
+  // 6. Final config step (already done above, just complete the step).
+  progress.step();
 
-  // 6. Install dependencies (unless --skip-install).
+  // 7. Install dependencies (unless --skip-install).
   if (!opts.skipInstall) {
-    console.log(`\n  Installing dependencies with ${packageManager}…\n`);
     installDeps(targetDir, packageManager);
   }
+  progress.step();
 
-  console.log(`
-  Next steps:
-    cd ${name}
-    js migrate
-    js db:seed
-    npm run dev                  → http://localhost:8080${includeDocs ? '  (framework docs at /docs)' : ''}
-
-  \`js\` is your app's Artisan-equivalent command — it works bare with a
-  global @chavajs/cli install, or as \`npx js <command>\` inside the app.
-`);
+  // Show congrats
+  printCongrats(name, includeDocs);
 }
 
 export function newProjectCommand(): Command {
