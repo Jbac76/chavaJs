@@ -48,7 +48,7 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
               </Link>
             ))}
 
-            {hasDocs && (
+            {hasDocs ? (
               <Link
                 href="/docs"
                 className={cn(
@@ -60,6 +60,17 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
               >
                 Docs
               </Link>
+            ) : (
+              <a
+                href="https://github.com/Jbac76/chavaJs/tree/master/packages/core/docs"
+                target="_blank"
+                rel="noreferrer"
+                className={cn(
+                  'rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
+                )}
+              >
+                Docs <span aria-hidden>↗</span>
+              </a>
             )}
 
             <ThemeToggle />

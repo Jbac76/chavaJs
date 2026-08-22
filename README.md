@@ -77,6 +77,71 @@ no PHP anywhere.
 - [Laravel → chavaJs cheat-sheet](#laravel--chavajs-cheat-sheet)
 - [License](#license)
 
+## Documentation
+
+The complete framework documentation ships inside every app and is served at
+`/docs` (opt-in during `chava new`). All 29 pages are also on GitHub:
+
+**Getting started**
+
+| # | Page | |
+|---|------|--|
+| 00 | Index & learning path | [00-index.md](packages/core/docs/00-index.md) |
+| 01 | Installation | [01-installation.md](packages/core/docs/01-installation.md) |
+| 02 | Configuration | [02-configuration.md](packages/core/docs/02-configuration.md) |
+| 03 | Architecture | [03-architecture.md](packages/core/docs/03-architecture.md) |
+
+**HTTP layer**
+
+| # | Page | |
+|---|------|--|
+| 04 | Routing | [04-routing.md](packages/core/docs/04-routing.md) |
+| 05 | Controllers | [05-controllers.md](packages/core/docs/05-controllers.md) |
+| 06 | Requests | [06-requests.md](packages/core/docs/06-requests.md) |
+| 07 | Validation | [07-validation.md](packages/core/docs/07-validation.md) |
+| 08 | Middleware | [08-middleware.md](packages/core/docs/08-middleware.md) |
+
+**Database & ORM**
+
+| # | Page | |
+|---|------|--|
+| 09 | Database | [09-database.md](packages/core/docs/09-database.md) |
+| 10 | Migrations | [10-migrations.md](packages/core/docs/10-migrations.md) |
+| 11 | Eloquent ORM | [11-eloquent.md](packages/core/docs/11-eloquent.md) |
+| 12 | Seeding | [12-seeding.md](packages/core/docs/12-seeding.md) |
+
+**Security & identity**
+
+| # | Page | |
+|---|------|--|
+| 13 | Authentication | [13-auth.md](packages/core/docs/13-auth.md) |
+| 14 | Sessions & CSRF | [14-sessions.md](packages/core/docs/14-sessions.md) |
+| 15 | Events | [15-events.md](packages/core/docs/15-events.md) |
+| 16 | Queues | [16-queues.md](packages/core/docs/16-queues.md) |
+| 17 | Mail & Notifications | [17-mail-notifications.md](packages/core/docs/17-mail-notifications.md) |
+| 18 | Scheduling | [18-scheduling.md](packages/core/docs/18-scheduling.md) |
+
+**Front end & tooling**
+
+| # | Page | |
+|---|------|--|
+| 19 | Frontend (Inertia + React) | [19-frontend.md](packages/core/docs/19-frontend.md) |
+| 20 | Console (`js` CLI) | [20-console.md](packages/core/docs/20-console.md) |
+| 21 | Testing | [21-testing.md](packages/core/docs/21-testing.md) |
+| 22 | Deployment | [22-deployment.md](packages/core/docs/22-deployment.md) |
+
+**Framework reference**
+
+| # | Page | |
+|---|------|--|
+| 23 | Service Container | [23-container.md](packages/core/docs/23-container.md) |
+| 24 | Support Utilities | [24-support.md](packages/core/docs/24-support.md) |
+| 25 | Facades | [25-facades.md](packages/core/docs/25-facades.md) |
+| 26 | Security | [26-security.md](packages/core/docs/26-security.md) |
+| 27 | File Storage | [27-filesystem.md](packages/core/docs/27-filesystem.md) |
+| 28 | Localization | [28-localization.md](packages/core/docs/28-localization.md) |
+| 29 | CORS | [29-cors.md](packages/core/docs/29-cors.md) |
+
 ## Requirements
 
 - **Node.js ≥ 18.17** (current LTS recommended)
@@ -132,8 +197,9 @@ bundles its framework.
   with `unique` / `confirmed` / `exists` / `regex` / custom rules, Form
   Request classes, and `request.validate()`
 - **Sessions + CSRF**: signed `chava_session` cookies, flash data / `old()`
-  input, and Laravel-exact CSRF (the `XSRF-TOKEN` cookie Inertia's axios
-  client echoes as `X-XSRF-TOKEN`; 419 on mismatch)
+  input, Laravel-exact CSRF (the `XSRF-TOKEN` cookie Inertia's axios
+  client echoes as `X-XSRF-TOKEN`; 419 on mismatch), and **server-side idle
+  expiry** — stale payloads are destroyed, not just cookie-expired
 - **Auth**: session guards, Sanctum-style personal access tokens
   (`auth:api`), `Hash` (scrypt), gates + policies (`user.can()`), and the
   `auth` / `guest` / `verified` / `can:` middleware
@@ -142,7 +208,8 @@ bundles its framework.
   `ShouldQueue` and the listener runs as a `CallQueuedListener` job
   (`queue:work`), never inside the request
 - **Queues**: `Job` classes, `sync` / `database` / `redis` (BullMQ) drivers,
-  retries + backoff + failed jobs, `chava queue:work`
+  retries + **per-attempt exponential backoff** (`backoff = [3, 15, 60]`) +
+  failed jobs, `chava queue:work`
 - **Mail**: `Mailable` classes, `log` / `array` / `smtp` (Nodemailer)
   drivers, Blade-style email templates
 - **Notifications**: `Notification` base with `mail` + `database` channels,
@@ -159,7 +226,13 @@ bundles its framework.
   cookies, HttpOnly/Secure/SameSite, request body size limits (413),
   APP_KEY enforcement in production, mass assignment protection, `npm audit`
   in CI, **rate limiting middleware**, **security headers** (HSTS, CSP,
-  X-Frame-Options, X-Content-Type-Options)
+  X-Frame-Options, X-Content-Type-Options), **global CORS** with origin
+  allow-list + preflight handling, **upload hardening** (MIME allow-list,
+  size caps, sanitized extensions)
+- **Operations**: **graceful shutdown** (SIGTERM drains requests, closes DB
+  pools + cache timers, 30s forced-exit guard), consistent machine-readable
+  error envelope (`error.code` / `error.details`), `X-Request-ID` correlation
+  on every response and error log
 - **Inertia server adapter**: `Inertia.render('Home', props)` with the full
   protocol (versioning, partial reloads, shared props incl. `auth.user`)
 - **CLI**: `chava serve`, `route:list`, `route:cache`, `route:clear`,

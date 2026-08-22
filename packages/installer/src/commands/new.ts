@@ -456,6 +456,16 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
     if (existsSync(noauthLayout)) {
       writeFileSync(join(targetDir, 'resources', 'js', 'Layouts', 'AppLayout.tsx'), readFileSync(noauthLayout));
     }
+    // Home page: drop the "Browse seeded users" CTA — /users does not exist
+    // in auth-free scaffolds.
+    const homePage = join(targetDir, 'resources', 'js', 'Pages', 'Home.tsx');
+    if (existsSync(homePage)) {
+      const source = readFileSync(homePage, 'utf8');
+      const usersButton = /\n\s*<Button asChild size="lg" variant="outline">\s*\n\s*<Link href="\/users">Browse seeded users<\/Link>\s*\n\s*<\/Button>/;
+      if (usersButton.test(source)) {
+        writeFileSync(homePage, source.replace(usersButton, ''));
+      }
+    }
   }
   progress.step();
 
