@@ -239,15 +239,14 @@ async function promptYesNo(
 
 // ------------------------------------------------------------------ install
 
-function installDeps(targetDir: string, packageManager: string): void {
-  const command = packageManager === 'npm' ? 'npm' : packageManager;
-  const args = packageManager === 'yarn' ? [] : ['install'];
-  const result = spawnSync(command, args, { cwd: targetDir, stdio: 'inherit', shell: process.platform === 'win32' });
-  if (result.status !== 0) {
-    error('Dependency installation failed.');
-    info(`Retry: cd ${basename(targetDir)} && ${command} ${args.join(' ')}`);
-    process.exit(1);
-  }
+function installDeps(targetDir: string, packageManager: string): boolean {
+  const cmd = packageManager === 'yarn' ? 'yarn' : `${packageManager} install --loglevel error`;
+  const result = spawnSync(cmd, {
+    cwd: targetDir,
+    shell: true,
+    stdio: ['ignore', 'ignore', 'ignore'],
+  });
+  return result.status === 0;
 }
 
 // ------------------------------------------------------------------ scaffold
@@ -438,9 +437,19 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
 
   // 7. Install dependencies (unless --skip-install).
   if (!opts.skipInstall) {
-    installDeps(targetDir, packageManager);
+    const installed = installDeps(targetDir, packageManager);
+    if (installed) {
+      progress.step();
+    } else {
+      progress.fail('Dependency installation failed');
+      console.log();
+      info(`Retry: cd ${name} && ${packageManager} install`);
+      console.log();
+      return;
+    }
+  } else {
+    progress.step();
   }
-  progress.step();
 
   // Show congrats
   printCongrats(name, includeDocs);
