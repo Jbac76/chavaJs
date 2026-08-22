@@ -325,7 +325,8 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
   // 1. Framework core.
   if (standalone) {
     copyTree(join(pkgRoot, 'src'), join(targetDir, 'src'));
-    copyTree(join(pkgRoot, 'bin'), join(targetDir, 'bin'));
+    const binDir = join(pkgRoot, 'bin');
+    if (existsSync(binDir)) copyTree(binDir, join(targetDir, 'bin'));
   } else {
     assembleFramework(repoRoot as string, targetDir);
   }
