@@ -1,6 +1,6 @@
 {
   "name": "@chavajs/inertia-react",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "description": "chavaJs Inertia server adapter for React — Inertia.render, HandleInertiaRequests, the HTML shell renderer and the full Inertia protocol, ported.",
   "type": "module",
   "license": "MIT",
