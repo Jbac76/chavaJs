@@ -12,7 +12,7 @@ import {
 } from 'node:fs';
 import { basename, dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { Command } from 'commander';
 import { fetchCore } from '../core';
 import {
@@ -209,14 +209,27 @@ export function scaffoldProject(sourceDir: string, targetDir: string, name: stri
 
 // ------------------------------------------------------------------ install
 
-function installDeps(targetDir: string, packageManager: string): boolean {
-  const cmd = packageManager === 'yarn' ? 'yarn' : `${packageManager} install --loglevel error`;
-  const result = spawnSync(cmd, {
-    cwd: targetDir,
-    shell: true,
-    stdio: ['ignore', 'ignore', 'ignore'],
+function installDeps(targetDir: string, packageManager: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    let cmd: string;
+    if (packageManager === 'yarn') {
+      cmd = 'yarn';
+    } else if (packageManager === 'pnpm') {
+      // pnpm v9+ returns exit 1 for ERR_PNPM_IGNORED_BUILDS even when
+      // packages are installed — pass --ignore-scripts to avoid the error,
+      // then run a postinstall to fetch native binaries (esbuild etc.).
+      cmd = 'pnpm install --ignore-scripts && pnpm rebuild';
+    } else {
+      cmd = 'npm install --loglevel error';
+    }
+    const child = spawn(cmd, {
+      cwd: targetDir,
+      shell: true,
+      stdio: ['ignore', 'ignore', 'ignore'],
+    });
+    child.on('close', (code) => resolve(code === 0));
+    child.on('error', () => resolve(false));
   });
-  return result.status === 0;
 }
 
 // ------------------------------------------------------------------ scaffold
@@ -425,7 +438,7 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
     progress.clear();
     const progressBar = new ProgressBar(packageManager);
     progressBar.start();
-    const installed = installDeps(targetDir, packageManager);
+    const installed = await installDeps(targetDir, packageManager);
     progressBar.stop(installed);
     console.log();
     if (!installed) {

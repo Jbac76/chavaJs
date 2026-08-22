@@ -13,18 +13,36 @@ const DIM = '\x1b[2m';
 
 // ------------------------------------------------------------------ logo
 
+/** Print a big, bold ASCII-art logo in orange gradient. */
 export function printLogo(): void {
-  const o = ORANGE;
   const r = RESET;
   const b = BOLD;
+
+  // 6-line block-character art for "chavaJs"
+  const art = [
+    '  ██████╗  █████╗ ███╗   ███╗ █████╗ ████████╗',
+    ' ██╔════╝ ██╔══██╗████╗ ████║██╔══██╗╚══██╔══╝',
+    ' ██║  ███╗███████║██╔████╔██║███████║   ██║   ',
+    ' ██║   ██║██╔══██║██║╚██╔╝██║██╔══██║   ██║   ',
+    ' ╚██████╔╝██║  ██║██║ ╚═╝ ██║██║  ██║   ██║   ',
+    '  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝   '];
+
+  // Orange gradient — bright at top, deeper at bottom
+  const gradient = [
+    '\x1b[38;2;255;130;30m',   // bright orange
+    '\x1b[38;2;255;115;15m',
+    '\x1b[38;2;255;100;5m',
+    '\x1b[38;2;240;85;0m',
+    '\x1b[38;2;220;70;0m',
+    '\x1b[38;2;200;60;0m',    // deep orange
+  ];
+
   console.log();
-  console.log(`${o}${b}    ╔═══════════════════════════════════════╗${r}`);
-  console.log(`${o}${b}    ║                                       ║${r}`);
-  console.log(`${o}${b}    ║${r}   ${o}${b}chavaJs${r}                              ${o}${b}║${r}`);
-  console.log(`${o}${b}    ║${r}   ${DIM}Laravel's experience, rebuilt         ${o}${b}║${r}`);
-  console.log(`${o}${b}    ║${r}   ${DIM}for Node.js                           ${o}${b}║${r}`);
-  console.log(`${o}${b}    ║                                       ║${r}`);
-  console.log(`${o}${b}    ╚═══════════════════════════════════════╝${r}`);
+  for (let i = 0; i < art.length; i++) {
+    process.stdout.write(`  ${gradient[i]}${b}${art[i]}${r}\n`);
+  }
+  console.log();
+  console.log(`  ${DIM}Laravel's experience, rebuilt for Node.js${r}`);
   console.log();
 }
 
@@ -60,9 +78,9 @@ export async function selectOption(
   if (!stdin.isTTY) return options[defaultIndex] ?? options[0];
 
   let selected = defaultIndex;
+  const lineCount = options.length + 1; // question line + option lines
 
   const render = () => {
-    stdout.write('\r\x1b[K');  // clear current line
     stdout.write(`  ${BOLD}${pc.white(question)}${RESET}\n`);
     for (let i = 0; i < options.length; i++) {
       const marker = i === selected ? `${ORANGE}❯${RESET}` : ' ';
@@ -70,8 +88,12 @@ export async function selectOption(
       const defaultTag = i === defaultIndex ? ` ${DIM}(default)${RESET}` : '';
       stdout.write(`    ${marker} ${label}${defaultTag}\n`);
     }
-    // Move cursor up to re-render on next keypress
-    stdout.write(`\x1b[${options.length}A`);
+  };
+
+  const redraw = () => {
+    // Move cursor to top of the block, clear everything below, then redraw
+    stdout.write(`\x1b[${lineCount}A\r\x1b[J`);
+    render();
   };
 
   // Hide cursor, show initial state
@@ -93,17 +115,12 @@ export async function selectOption(
       }
       if (key === '\x1b[A') {  // up arrow
         selected = (selected - 1 + options.length) % options.length;
-        // Move cursor down to bottom, then clear and redraw
-        stdout.write(`\x1b[${options.length}B`);
-        stdout.write('\r\x1b[J');
-        render();
+        redraw();
         return;
       }
       if (key === '\x1b[B') {  // down arrow
         selected = (selected + 1) % options.length;
-        stdout.write(`\x1b[${options.length}B`);
-        stdout.write('\r\x1b[J');
-        render();
+        redraw();
         return;
       }
       if (key === '\x03') {  // Ctrl+C
@@ -117,9 +134,7 @@ export async function selectOption(
       stdin.setRawMode(false);
       stdin.pause();
       rl.close();
-      // Move cursor below the options list
-      stdout.write(`\x1b[${options.length}B`);
-      // Show cursor
+      // Cursor is already at bottom of block after last render — just show it
       stdout.write('\x1b[?25h');
     };
 
@@ -129,7 +144,7 @@ export async function selectOption(
   return result;
 }
 
-/** Toggle yes/no — press Enter to accept, 'y'/'n' to toggle. */
+/** Toggle yes/no — press Enter to accept, arrow keys to toggle. */
 export async function selectYesNo(
   question: string,
   defaultYes: boolean = true,
@@ -139,10 +154,14 @@ export async function selectYesNo(
   let yes = defaultYes;
 
   const render = () => {
-    stdout.write('\r\x1b[K');
     const yesLabel = yes ? `${BOLD}${ORANGE}Yes${RESET}` : `  Yes`;
     const noLabel = !yes ? `${BOLD}${ORANGE}No${RESET}` : `  No`;
-    stdout.write(`  ${BOLD}${pc.white(question)}${RESET}  [${yesLabel} / ${noLabel}]`);
+    stdout.write(`  ${BOLD}${pc.white(question)}${RESET}  [${yesLabel} / ${noLabel}]\n`);
+  };
+
+  const redraw = () => {
+    stdout.write('\x1b[1A\r\x1b[J');
+    render();
   };
 
   stdout.write('\x1b[?25l');
@@ -161,15 +180,19 @@ export async function selectYesNo(
         resolve(yes);
         return;
       }
-      if (key === '\x1b[D' || key === '\x1b[C' || key === 'y' || key === 'Y') {
+      if (key === '\x1b[D' || key === '\x1b[C') {
+        yes = !yes; // toggle on left/right arrow
+        redraw();
+        return;
+      }
+      if (key === 'y' || key === 'Y') {
         yes = true;
-        render();
-        if (key === 'y' || key === 'Y') { cleanup(); resolve(true); }
+        cleanup();
+        resolve(true);
         return;
       }
       if (key === 'n' || key === 'N') {
         yes = false;
-        render();
         cleanup();
         resolve(false);
         return;
@@ -182,7 +205,6 @@ export async function selectYesNo(
       stdin.setRawMode(false);
       stdin.pause();
       rl.close();
-      stdout.write('\n');
       stdout.write('\x1b[?25h');
     };
 
