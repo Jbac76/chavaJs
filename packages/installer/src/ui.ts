@@ -1,5 +1,4 @@
 import pc from 'picocolors';
-import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
 
 // ------------------------------------------------------------------ colors
@@ -18,34 +17,33 @@ export function printLogo(): void {
   const r = RESET;
   const b = BOLD;
 
-  // 6-line block-character art for "chavaJs" (ANSI Shadow font, solid blocks)
+  // 6-line block-character art for "chavaJs" (ANSI Shadow font, solid v)
   const art = [
-    ' ██████╗██╗  ██╗ █████╗ ██╗   ██╗ █████╗      ██╗███████╗',
-    '██╔════╝██║  ██║██╔══██╗██║   ██║██╔══██╗     ██║██╔════╝',
-    '██║     ███████║███████║██║   ██║███████║     ██║███████╗',
-    '██║     ██╔══██║██╔══██║╚██╗ ██╔╝██╔══██║██   ██║╚════██║',
-    '╚██████╗██║  ██║██║  ██║ ╚████╔╝ ██║  ██║╚█████╔╝███████║',
-    ' ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚═╝  ╚═╝ ╚════╝ ╚══════╝'];
+    ' ██████╗██╗  ██╗ █████╗ ██╗      ██╗ █████╗      ██╗███████╗',
+    '██╔════╝██║  ██║██╔══██╗██║      ██║██╔══██╗     ██║██╔════╝',
+    '██║     ███████║███████║██║      ██║███████║     ██║███████╗',
+    '██║     ██╔══██║██╔══██║╚██╗    ██╔╝██╔══██║██   ██║╚════██║',
+    '╚██████╗██║  ██║██║  ██║ ╚████████╔╝██║  ██║╚█████╔╝███████║',
+    ' ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══════╝ ╚═╝  ╚═╝ ╚════╝ ╚══════╝'];
 
-  // Vibrant orange gradient — bright fiery orange (Laravel-style)
+  // Orange gradient — bright at top, deeper at bottom
   const gradient = [
-    '\x1b[38;2;255;140;50m',   // bright fiery orange
-    '\x1b[38;2;255;120;30m',   // vivid orange
-    '\x1b[38;2;255;105;15m',   // strong orange
-    '\x1b[38;2;245;90;10m',    // deep orange
-    '\x1b[38;2;230;75;5m',     // darker orange
-    '\x1b[38;2;215;65;0m',     // burnt orange
+    '\x1b[38;2;255;130;30m',   // bright orange
+    '\x1b[38;2;255;115;15m',
+    '\x1b[38;2;255;100;5m',
+    '\x1b[38;2;240;85;0m',
+    '\x1b[38;2;220;70;0m',
+    '\x1b[38;2;200;60;0m',    // deep orange
   ];
 
   console.log();
-  console.log();
   for (let i = 0; i < art.length; i++) {
-    process.stdout.write(`    ${gradient[i]}${b}${art[i]}${r}\n`);
+    process.stdout.write(`  ${gradient[i]}${b}${art[i]}${r}\n`);
   }
   console.log();
-  console.log(`    ${b}${ORANGE}Laravel's experience, rebuilt for Node.js${r}`);
+  console.log(`  ${DIM}Laravel's experience, rebuilt for Node.js${r}`);
   console.log();
-  console.log();
+}
 
 // ------------------------------------------------------------------ congrats
 
@@ -92,18 +90,14 @@ export async function selectOption(
   };
 
   const redraw = () => {
-    // Move cursor up to the start of the question, clear from cursor to end of screen, then redraw
-    stdout.write(`\x1b[${lineCount}A`); // Move up
-    stdout.write('\r');                 // Move to start of line
-    stdout.write('\x1b[J');             // Clear from cursor to end of screen
+    // Cursor sits on the empty line below the block after each render.
+    stdout.write(`\x1b[${lineCount}A\r\x1b[J`); // up to question, clear down
     render();
   };
 
-  // Hide cursor, show initial state
-  stdout.write('\x1b[?25l');
+  stdout.write('\x1b[?25l'); // hide cursor
   render();
 
-  const rl = createInterface({ input: stdin, output: stdout });
   stdin.setRawMode(true);
   stdin.resume();
 
@@ -116,12 +110,12 @@ export async function selectOption(
         resolve(options[selected]);
         return;
       }
-      if (key === '\x1b[A') {  // up arrow
+      if (key.includes('\x1b[A')) {  // up arrow
         selected = (selected - 1 + options.length) % options.length;
         redraw();
         return;
       }
-      if (key === '\x1b[B') {  // down arrow
+      if (key.includes('\x1b[B')) {  // down arrow
         selected = (selected + 1) % options.length;
         redraw();
         return;
@@ -135,10 +129,7 @@ export async function selectOption(
     const cleanup = () => {
       stdin.removeListener('data', onData);
       stdin.setRawMode(false);
-      stdin.pause();
-      rl.close();
-      // Cursor is already at bottom of block after last render — just show it
-      stdout.write('\x1b[?25h');
+      stdout.write('\x1b[?25h'); // show cursor
     };
 
     stdin.on('data', onData);
@@ -169,10 +160,9 @@ export async function selectYesNo(
     render();
   };
 
-  stdout.write('\x1b[?25l');
+  stdout.write('\x1b[?25l'); // hide cursor
   render();
 
-  const rl = createInterface({ input: stdin, output: stdout });
   stdin.setRawMode(true);
   stdin.resume();
 
@@ -185,7 +175,7 @@ export async function selectYesNo(
         resolve(yes);
         return;
       }
-      if (key === '\x1b[D' || key === '\x1b[C') {
+      if (key.includes('\x1b[D') || key.includes('\x1b[C')) {
         yes = !yes; // toggle on left/right arrow
         redraw();
         return;
@@ -208,9 +198,7 @@ export async function selectYesNo(
     const cleanup = () => {
       stdin.removeListener('data', onData);
       stdin.setRawMode(false);
-      stdin.pause();
-      rl.close();
-      stdout.write('\x1b[?25h');
+      stdout.write('\x1b[?25h'); // show cursor
     };
 
     stdin.on('data', onData);
@@ -353,7 +341,7 @@ export class ProgressBar {
     const status = done ? `${pc.green('done')}` : `${ORANGE}installing${RESET}`;
 
     if (process.stdout.isTTY) {
-      process.stdout.write(`\r  ${icon}  ${bar} ${pctStr}  ${status}  ${DIM}${this.label}${RESET}`);
+      process.stdout.write(`\r\x1b[K  ${icon}  ${bar} ${pctStr}  ${status}  ${DIM}${this.label}${RESET}`);
     } else if (done) {
       console.log(`  ${icon}  ${bar} ${pctStr}  ${status}`);
     }

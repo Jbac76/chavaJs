@@ -76,10 +76,11 @@ export async function fetchCore(version = 'latest'): Promise<string> {
   const cacheRoot = join(homedir(), '.chava', 'core');
   const cached = join(cacheRoot, meta.version);
 
-  // Already cached with CLI merged? Return early.
+  // Already cached with CLI + inertia adapter merged? Return early.
   if (
     existsSync(join(cached, 'src', 'foundation', 'Application.ts')) &&
-    existsSync(join(cached, 'src', 'cli', 'index.ts'))
+    existsSync(join(cached, 'src', 'cli', 'index.ts')) &&
+    existsSync(join(cached, 'src', 'inertia', 'HtmlRenderer.ts'))
   ) {
     return cached;
   }
@@ -120,6 +121,21 @@ export async function fetchCore(version = 'latest'): Promise<string> {
     const cliTemplate = join(cliDir, 'template');
     if (existsSync(cliTemplate)) {
       copyTree(cliTemplate, join(coreDir, 'template'));
+    }
+
+    // 3. Download and extract @chavajs/inertia-react, merge into core layout.
+    //    Mirrors the monorepo assembly: inertia-react/src/** → src/inertia/**.
+    try {
+      const inertiaDir = join(tmp, 'inertia');
+      mkdirSync(inertiaDir, { recursive: true });
+      await downloadPkg('@chavajs/inertia-react', version, inertiaDir);
+      const inertiaSrc = join(inertiaDir, 'src');
+      if (existsSync(join(inertiaSrc, 'HtmlRenderer.ts'))) {
+        copyTree(inertiaSrc, join(coreDir, 'src', 'inertia'));
+      }
+    } catch {
+      // Older registries may not carry the adapter — scaffold still works for
+      // API-only apps; InertiaServiceProvider will surface a clear error.
     }
 
     rmSync(cached, { recursive: true, force: true });
