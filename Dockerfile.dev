@@ -1,0 +1,25 @@
+# Dockerfile for development
+# Hot reloading and development tools included
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install development tools
+RUN apk add --no-cache git
+
+# Install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Assemble framework
+RUN npm run assemble
+
+# Expose ports
+EXPOSE 8080 5173
+
+# Development command
+CMD ["npm", "run", "dev", "--prefix", "examples/starter"]

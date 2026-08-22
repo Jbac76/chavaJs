@@ -23,6 +23,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:coverage:ui": "vitest --coverage --ui",
     "test:browser": "playwright test",
     "test:postgres": "node ../../scripts/run-tests-driver.mjs postgres",
     "test:mysql": "node ../../scripts/run-tests-driver.mjs mysql"

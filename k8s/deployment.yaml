@@ -1,0 +1,139 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chavajs-app
+  labels:
+    app: chavajs
+    tier: backend
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: chavajs
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: chavajs
+        tier: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: app
+        image: chavajs:latest
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        env:
+        - name: APP_NAME
+          value: "chavaJs"
+        - name: APP_ENV
+          value: "production"
+        - name: APP_DEBUG
+          value: "false"
+        - name: APP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: chavajs-secrets
+              key: app-key
+        - name: DB_CONNECTION
+          value: "postgres"
+        - name: DB_HOST
+          value: "postgres-service"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_DATABASE
+          value: "chava_production"
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: chavajs-secrets
+              key: db-username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: chavajs-secrets
+              key: db-password
+        - name: REDIS_HOST
+          value: "redis-service"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: chavajs-secrets
+              key: redis-password
+        - name: QUEUE_CONNECTION
+          value: "redis"
+        - name: SESSION_DRIVER
+          value: "redis"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: storage
+          mountPath: /app/storage
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: chavajs-storage-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chavajs-service
+  labels:
+    app: chavajs
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app: chavajs
+    tier: backend
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: chavajs-storage-pvc
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard

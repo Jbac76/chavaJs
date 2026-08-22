@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: chavajs-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: chava
+      POSTGRES_PASSWORD: chava
+      POSTGRES_DB: chava_dev
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chava -d chava_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - chavajs
+
+  # MySQL Database (alternative to Postgres)
+  mysql:
+    image: mysql:8.4
+    container_name: chavajs-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: chava_dev
+      MYSQL_USER: chava
+      MYSQL_PASSWORD: chava
+      MYSQL_ALLOW_EMPTY_PASSWORD: "no"
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "chava", "-pchava"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - chavajs
+
+  # Redis for queue and cache
+  redis:
+    image: redis:7-alpine
+    container_name: chavajs-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass chava
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - chavajs
+
+  # MailHog for email testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: chavajs-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - chavajs
+
+  # Adminer for database management
+  adminer:
+    image: adminer:latest
+    container_name: chavajs-adminer
+    restart: unless-stopped
+    ports:
+      - "8090:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN: pepa-linha
+    depends_on:
+      - postgres
+      - mysql
+    networks:
+      - chavajs
+
+networks:
+  chavajs:
+    driver: bridge
+    name: chavajs-network
+
+volumes:
+  postgres_data:
+    driver: local
+    name: chavajs-postgres-data
+  mysql_data:
+    driver: local
+    name: chavajs-mysql-data
+  redis_data:
+    driver: local
+    name: chavajs-redis-data

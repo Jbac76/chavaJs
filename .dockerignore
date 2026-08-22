@@ -1,0 +1,48 @@
+# chavaJs
+.git
+.gitignore
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Documentation
+README.md
+CONTRIBUTING.md
+LICENSE
+*.md
+docs/
+
+# Tests
+tests/
+*.test.ts
+*.spec.ts
+coverage/
+
+# Development files
+.env
+.env.*
+!.env.example
+.vscode/
+.idea/
+
+# Build artifacts
+dist/
+build/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Docker
+docker-compose*.yml
+Dockerfile.dev
+
+# Kubernetes (only use in deployment)
+k8s/
+
+# Logs
+*.log
+logs/
+storage/logs/*
+!storage/logs/.gitkeep

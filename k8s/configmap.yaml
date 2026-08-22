@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: chavajs-config
+  labels:
+    app: chavajs
+data:
+  # Application configuration
+  APP_NAME: "chavaJs"
+  APP_ENV: "production"
+  APP_DEBUG: "false"
+  APP_URL: "https://your-domain.com"
+
+  # Database
+  DB_CONNECTION: "postgres"
+  DB_HOST: "postgres-service"
+  DB_PORT: "5432"
+  DB_DATABASE: "chava_production"
+
+  # Redis
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+
+  # Queue
+  QUEUE_CONNECTION: "redis"
+
+  # Session
+  SESSION_DRIVER: "redis"
+  SESSION_LIFETIME: "120"
+  SESSION_COOKIE: "chava_session"
+  SESSION_SECURE: "true"
+  SESSION_SAME_SITE: "lax"
+
+  # Cache
+  CACHE_DRIVER: "redis"
+
+  # Mail
+  MAIL_MAILER: "smtp"
+  MAIL_HOST: "smtp.example.com"
+  MAIL_PORT: "587"
+  MAIL_FROM_ADDRESS: "noreply@your-domain.com"
+  MAIL_FROM_NAME: "chavaJs"
+
+  # Vite (not needed in production, but for reference)
+  VITE_URL: "https://cdn.your-domain.com"

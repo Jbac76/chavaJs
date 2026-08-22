@@ -92,7 +92,9 @@ no PHP anywhere.
 | HTTP     | Node `http` with a Laravel-style router/middleware API on top         |
 | Frontend | React 18 + **Inertia.js** + Tailwind CSS + **shadcn/ui** + **Motion** |
 | Build    | Vite (with a laravel-vite-plugin-equivalent manifest)                 |
-| Tests    | Vitest (+ Playwright for browser specs)                               |
+| Tests    | Vitest (+ Playwright for browser specs) with coverage reporting       |
+| Cache    | Memory / Redis with unified API                                       |
+| Logging  | Structured logging (JSON in production, pretty in dev)               |
 
 ## What works right now
 
@@ -156,7 +158,8 @@ bundles its framework.
 - **Security**: parameterized SQL queries, CSRF protection, signed session
   cookies, HttpOnly/Secure/SameSite, request body size limits (413),
   APP_KEY enforcement in production, mass assignment protection, `npm audit`
-  in CI
+  in CI, **rate limiting middleware**, **security headers** (HSTS, CSP,
+  X-Frame-Options, X-Content-Type-Options)
 - **Inertia server adapter**: `Inertia.render('Home', props)` with the full
   protocol (versioning, partial reloads, shared props incl. `auth.user`)
 - **CLI**: `chava serve`, `route:list`, `route:cache`, `route:clear`,
@@ -179,6 +182,16 @@ bundles its framework.
 - **Playwright browser tests** (Dusk-equivalent) against a dedicated test
   database, plus **GitHub Actions CI** (typecheck + audit + tests ×3 engines +
   build + browser + installer boot-check)
+- **Production Infrastructure**: Docker development environment, multi-stage
+  production Dockerfile, **Kubernetes deployment manifests** with health checks,
+  autoscaling, and ingress configuration
+- **Observability**: **structured logging** (JSON in production, pretty in dev),
+  **health check endpoints** (`/health`, `/health/ready`, `/health/info`),
+  comprehensive error handling with request context
+- **Caching**: unified cache API with **Memory** and **Redis** drivers,
+  `remember()` helper, atomic increment/decrement operations
+- **Developer Tools**: VSCode debug configurations, Docker Compose for databases,
+  test coverage reporting with thresholds, strict TypeScript configuration
 
 ---
 

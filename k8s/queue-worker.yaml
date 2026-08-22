@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chavajs-queue-worker
+  labels:
+    app: chavajs
+    tier: worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: chavajs
+      tier: worker
+  template:
+    metadata:
+      labels:
+        app: chavajs
+        tier: worker
+    spec:
+      containers:
+      - name: worker
+        image: chavajs:latest
+        imagePullPolicy: Always
+        command: ["node", "bin/chava.js", "queue:work"]
+        args: ["--tries=3", "--timeout=60"]
+        env:
+        - name: APP_NAME
+          value: "chavaJs"
+        - name: APP_ENV
+          value: "production"
+        - name: APP_DEBUG
+          value: "false"
+        - name: APP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: chavajs-secrets
+              key: app-key
+        - name: DB_CONNECTION
+          value: "postgres"
+        - name: DB_HOST
+          value: "postgres-service"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_DATABASE
+          value: "chava_production"
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: chavajs-secrets
+              key: db-username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: chavajs-secrets
+              key: db-password
+        - name: REDIS_HOST
+          value: "redis-service"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: chavajs-secrets
+              key: redis-password
+        - name: QUEUE_CONNECTION
+          value: "redis"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "ps aux | grep -v grep | grep 'queue:work' || exit 1"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
