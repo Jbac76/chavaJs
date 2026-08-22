@@ -116,6 +116,12 @@ export async function fetchCore(version = 'latest'): Promise<string> {
       copyTree(cliBin, join(coreDir, 'bin'));
     }
 
+    // Merge: cli/template/ → core/template/
+    const cliTemplate = join(cliDir, 'template');
+    if (existsSync(cliTemplate)) {
+      copyTree(cliTemplate, join(coreDir, 'template'));
+    }
+
     rmSync(cached, { recursive: true, force: true });
     renameSync(coreDir, cached);
     return cached;
