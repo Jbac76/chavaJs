@@ -8,8 +8,12 @@ import { UserController } from '../app/Http/Controllers/UserController';
 import { User } from '../app/Models/User';
 import { DatabaseNotification } from '../src/notifications/Notifiable';
 import { Route } from '../src/facades';
+import { HealthCheckController } from '../src/http/controllers/HealthCheckController';
 
 // Like routes/web.php — everything here is wrapped in the `web` middleware group.
+
+// Laravel 11 style health endpoint (no auth required).
+Route.get('/up', [HealthCheckController, 'up']).name('health');
 Route.get('/', [HomeController, 'index']).name('home');
 Route.get('/about', [AboutController, 'index']).name('about');
 
