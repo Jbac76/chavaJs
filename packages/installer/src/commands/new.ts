@@ -209,7 +209,7 @@ export function scaffoldProject(sourceDir: string, targetDir: string, name: stri
 
 // ------------------------------------------------------------------ install
 
-function installDeps(targetDir: string, packageManager: string): Promise<boolean> {
+function installDeps(targetDir: string, packageManager: string, onProgress?: (percent: number) => void): Promise<boolean> {
   return new Promise((resolve) => {
     let cmd: string;
     if (packageManager === 'yarn') {
@@ -222,12 +222,44 @@ function installDeps(targetDir: string, packageManager: string): Promise<boolean
     } else {
       cmd = 'npm install --loglevel error';
     }
+
     const child = spawn(cmd, {
       cwd: targetDir,
       shell: true,
-      stdio: ['ignore', 'ignore', 'ignore'],
+      stdio: ['ignore', 'pipe', 'pipe'], // Capture stdout and stderr
     });
-    child.on('close', (code) => resolve(code === 0));
+
+    let buffer = '';
+    let lastProgress = 0;
+    const progressKeywords = ['package', 'fetch', 'download', 'extract', 'install', 'resolve', 'link'];
+
+    const processOutput = (data: Buffer) => {
+      buffer += data.toString();
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      // Estimate progress based on output activity
+      if (onProgress && lines.length > 0) {
+        // Increment progress gradually with each line of output
+        for (const line of lines) {
+          const lowerLine = line.toLowerCase();
+          if (progressKeywords.some(kw => lowerLine.includes(kw))) {
+            lastProgress = Math.min(lastProgress + 2, 90);
+            onProgress(lastProgress);
+          }
+        }
+      }
+    };
+
+    if (child.stdout) child.stdout.on('data', processOutput);
+    if (child.stderr) child.stderr.on('data', processOutput);
+
+    child.on('close', (code) => {
+      if (onProgress && code === 0) {
+        onProgress(100);
+      }
+      resolve(code === 0);
+    });
     child.on('error', () => resolve(false));
   });
 }
@@ -438,7 +470,12 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
     progress.clear();
     const progressBar = new ProgressBar(packageManager);
     progressBar.start();
-    const installed = await installDeps(targetDir, packageManager);
+
+    // Track real progress during installation
+    const installed = await installDeps(targetDir, packageManager, (percent) => {
+      progressBar.updateProgress(percent);
+    });
+
     progressBar.stop(installed);
     console.log();
     if (!installed) {

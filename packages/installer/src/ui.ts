@@ -13,38 +13,39 @@ const DIM = '\x1b[2m';
 
 // ------------------------------------------------------------------ logo
 
-/** Print a big, bold ASCII-art logo in orange gradient. */
+/** Print a big, bold ASCII-art logo in vibrant orange gradient like Laravel. */
 export function printLogo(): void {
   const r = RESET;
   const b = BOLD;
 
-  // 6-line block-character art for "chavaJs" (ANSI Shadow font)
+  // 6-line block-character art for "chavaJs" (ANSI Shadow font, solid blocks)
   const art = [
     ' ██████╗██╗  ██╗ █████╗ ██╗   ██╗ █████╗      ██╗███████╗',
     '██╔════╝██║  ██║██╔══██╗██║   ██║██╔══██╗     ██║██╔════╝',
-    '██║     ███████║███████║██║   ██║███████║██   ██║███████╗',
-    '██║     ██╔══██║██╔══██║██║   ██║██╔══██║██   ██║╚════██║',
-    '╚██████╗██║  ██║██║  ██║╚██╗ ██╔╝██║  ██║╚█████╔╝███████║',
-    ' ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═══╝  ╚═╝  ╚═╝ ╚════╝ ╚══════╝'];
+    '██║     ███████║███████║██║   ██║███████║     ██║███████╗',
+    '██║     ██╔══██║██╔══██║╚██╗ ██╔╝██╔══██║██   ██║╚════██║',
+    '╚██████╗██║  ██║██║  ██║ ╚████╔╝ ██║  ██║╚█████╔╝███████║',
+    ' ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚═╝  ╚═╝ ╚════╝ ╚══════╝'];
 
-  // Orange gradient — bright at top, deeper at bottom
+  // Vibrant orange gradient — bright fiery orange (Laravel-style)
   const gradient = [
-    '\x1b[38;2;255;130;30m',   // bright orange
-    '\x1b[38;2;255;115;15m',
-    '\x1b[38;2;255;100;5m',
-    '\x1b[38;2;240;85;0m',
-    '\x1b[38;2;220;70;0m',
-    '\x1b[38;2;200;60;0m',    // deep orange
+    '\x1b[38;2;255;140;50m',   // bright fiery orange
+    '\x1b[38;2;255;120;30m',   // vivid orange
+    '\x1b[38;2;255;105;15m',   // strong orange
+    '\x1b[38;2;245;90;10m',    // deep orange
+    '\x1b[38;2;230;75;5m',     // darker orange
+    '\x1b[38;2;215;65;0m',     // burnt orange
   ];
 
   console.log();
+  console.log();
   for (let i = 0; i < art.length; i++) {
-    process.stdout.write(`  ${gradient[i]}${b}${art[i]}${r}\n`);
+    process.stdout.write(`    ${gradient[i]}${b}${art[i]}${r}\n`);
   }
   console.log();
-  console.log(`  ${DIM}Laravel's experience, rebuilt for Node.js${r}`);
+  console.log(`    ${b}${ORANGE}Laravel's experience, rebuilt for Node.js${r}`);
   console.log();
-}
+  console.log();
 
 // ------------------------------------------------------------------ congrats
 
@@ -91,8 +92,10 @@ export async function selectOption(
   };
 
   const redraw = () => {
-    // Move cursor to top of the block, clear everything below, then redraw
-    stdout.write(`\x1b[${lineCount}A\r\x1b[J`);
+    // Move cursor up to the start of the question, clear from cursor to end of screen, then redraw
+    stdout.write(`\x1b[${lineCount}A`); // Move up
+    stdout.write('\r');                 // Move to start of line
+    stdout.write('\x1b[J');             // Clear from cursor to end of screen
     render();
   };
 
@@ -160,7 +163,9 @@ export async function selectYesNo(
   };
 
   const redraw = () => {
-    stdout.write('\x1b[1A\r\x1b[J');
+    stdout.write('\x1b[1A');  // Move up one line
+    stdout.write('\r');       // Carriage return to start of line
+    stdout.write('\x1b[K');   // Clear the entire line
     render();
   };
 
@@ -299,6 +304,7 @@ export class ProgressBar {
   private width = 30;
   private current = 0;
   private timer: ReturnType<typeof setInterval> | null = null;
+  private manualMode = false;
 
   constructor(label: string) {
     this.label = label;
@@ -306,19 +312,28 @@ export class ProgressBar {
 
   start(): void {
     this.current = 0;
+    this.manualMode = false;
     this.render(0);
-    // Animate smoothly: slow down as we approach 95%
+    // Fallback animation if no manual updates come in
     this.timer = setInterval(() => {
-      if (this.current < 70) {
-        this.current += Math.random() * 4 + 1;
-      } else if (this.current < 90) {
-        this.current += Math.random() * 1.5 + 0.3;
-      } else if (this.current < 95) {
-        this.current += Math.random() * 0.3 + 0.05;
+      if (this.manualMode) return; // Don't animate if getting real updates
+
+      if (this.current < 30) {
+        this.current += Math.random() * 2 + 0.5;
+      } else if (this.current < 60) {
+        this.current += Math.random() * 1 + 0.3;
+      } else if (this.current < 85) {
+        this.current += Math.random() * 0.5 + 0.1;
       }
-      this.current = Math.min(this.current, 95);
+      this.current = Math.min(this.current, 85);
       this.render(this.current);
-    }, 200);
+    }, 300);
+  }
+
+  updateProgress(pct: number): void {
+    this.manualMode = true;
+    this.current = Math.min(pct, 99);
+    this.render(this.current);
   }
 
   stop(success: boolean): void {
