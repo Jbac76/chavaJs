@@ -326,7 +326,7 @@ export class Router {
       }
       for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
         const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
-        const full = join(current, entry.name);
+        const full = path.join(current, entry.name);
         if (entry.isDirectory()) {
           await walk(full, rel);
         } else if (entry.isFile()) {

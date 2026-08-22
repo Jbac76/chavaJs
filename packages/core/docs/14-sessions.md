@@ -119,6 +119,14 @@ store.keep('success', 'warning');
 | `secure` | `false` | HTTPS-only cookie |
 | `http_only` | `true` | not readable by JavaScript |
 
+### Server-side idle expiry
+
+The same `lifetime` value drives **server-side** validation: every session
+payload is stamped with `_last_activity`, and on the next request a payload
+older than `lifetime` minutes is destroyed and replaced with an empty session.
+A replayed/stolen old cookie therefore cannot resurrect state — expiry is not
+just a cookie countdown. Set `lifetime` to `0` to disable server-side expiry.
+
 ## CSRF protection
 
 `VerifyCsrfToken` (web group) protects every state-changing request. For Inertia
