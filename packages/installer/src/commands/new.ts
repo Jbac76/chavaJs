@@ -19,14 +19,15 @@ import {
   printLogo,
   printCongrats,
   Progress,
+  ProgressBar,
   Spinner,
   summaryBox,
   divider,
   info,
   success,
   error,
-  radioGroup,
-  checkbox,
+  selectOption,
+  selectYesNo,
 } from '../ui';
 
 /**
@@ -206,37 +207,6 @@ export function scaffoldProject(sourceDir: string, targetDir: string, name: stri
   }
 }
 
-// ------------------------------------------------------------------ prompts
-
-async function promptChoice(
-  rl: ReturnType<typeof createInterface>,
-  question: string,
-  options: string[],
-  fallback: string,
-  displayFn?: (opts: string[], fb: string) => void,
-): Promise<string> {
-  if (displayFn) {
-    displayFn(options, fallback);
-  }
-  for (;;) {
-    const answer = (await rl.question(`  `)).trim().toLowerCase();
-    if (answer === '') return fallback;
-    if (options.includes(answer)) return answer;
-    error(`Choose one of: ${options.join(', ')}`);
-  }
-}
-
-async function promptYesNo(
-  rl: ReturnType<typeof createInterface>,
-  question: string,
-  fallback: boolean,
-): Promise<boolean> {
-  const symbol = fallback ? 'Y' : 'N';
-  const answer = (await rl.question(`  ${question} [${symbol}/${fallback ? 'n' : 'y'}]: `)).trim().toLowerCase();
-  if (answer === '') return fallback;
-  return ['y', 'yes'].includes(answer);
-}
-
 // ------------------------------------------------------------------ install
 
 function installDeps(targetDir: string, packageManager: string): boolean {
@@ -296,7 +266,6 @@ async function resolveSourceRoots(opts: NewOptions): Promise<{ repoRoot: string 
 
 async function collectOptions(options: NewOptions): Promise<Required<Pick<NewOptions, 'name' | 'database' | 'packageManager'>> & { withAuth: boolean; includeDocs: boolean }> {
   const interactive = stdin.isTTY;
-  const rl = interactive ? createInterface({ input: stdin, output: stdout }) : null;
 
   let name = options.name;
   let database = options.database;
@@ -305,32 +274,47 @@ async function collectOptions(options: NewOptions): Promise<Required<Pick<NewOpt
   let packageManager = options.packageManager;
 
   if (!name) {
-    if (!rl) { error('Please provide an application name: chava new <name>'); process.exit(1); }
+    if (!interactive) { error('Please provide an application name: chava new <name>'); process.exit(1); }
+    const rl = createInterface({ input: stdin, output: stdout });
     name = (await rl.question('  Application name: ')).trim();
+    rl.close();
   }
   if (!name) { error('An application name is required.'); process.exit(1); }
 
-  if (!database) database = rl ? await promptChoice(rl, 'Database engine', DB_ENGINES, 'sqlite', (opts, fb) => {
-    radioGroup('Database engine', opts, fb);
-  }) : 'sqlite';
+  console.log();
+
+  if (!database) {
+    database = interactive
+      ? await selectOption('Database engine', DB_ENGINES, 0)
+      : 'sqlite';
+  }
   if (!DB_ENGINES.includes(database)) {
     error(`Unknown database engine [${database}]. Choose: ${DB_ENGINES.join(', ')}`);
     process.exit(1);
   }
 
-  if (withAuth === undefined) withAuth = rl ? await promptYesNo(rl, 'Include authentication UI (login / register / dashboard)?', true) : true;
+  if (withAuth === undefined) {
+    withAuth = interactive
+      ? await selectYesNo('Include authentication UI (login / register / dashboard)?', true)
+      : true;
+  }
 
-  if (includeDocs === undefined) includeDocs = rl ? await promptYesNo(rl, 'Include framework documentation (served at /docs)?', true) : true;
+  if (includeDocs === undefined) {
+    includeDocs = interactive
+      ? await selectYesNo('Include framework documentation (served at /docs)?', true)
+      : true;
+  }
 
-  if (!packageManager) packageManager = rl ? await promptChoice(rl, 'Package manager', PACKAGE_MANAGERS, 'npm', (opts, fb) => {
-    radioGroup('Package manager', opts, fb);
-  }) : 'npm';
+  if (!packageManager) {
+    packageManager = interactive
+      ? await selectOption('Package manager', PACKAGE_MANAGERS, 0)
+      : 'npm';
+  }
   if (!PACKAGE_MANAGERS.includes(packageManager)) {
     error(`Unknown package manager [${packageManager}]. Choose: ${PACKAGE_MANAGERS.join(', ')}`);
     process.exit(1);
   }
 
-  rl?.close();
   return { name, database, withAuth, includeDocs, packageManager };
 }
 
@@ -437,11 +421,15 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
 
   // 7. Install dependencies (unless --skip-install).
   if (!opts.skipInstall) {
+    // Clear the Progress active line so ProgressBar renders cleanly.
+    progress.clear();
+    const progressBar = new ProgressBar(packageManager);
+    progressBar.start();
     const installed = installDeps(targetDir, packageManager);
-    if (installed) {
-      progress.step();
-    } else {
-      progress.fail('Dependency installation failed');
+    progressBar.stop(installed);
+    console.log();
+    if (!installed) {
+      error('Dependency installation failed');
       console.log();
       info(`Retry: cd ${name} && ${packageManager} install`);
       console.log();

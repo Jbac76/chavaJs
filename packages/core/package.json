@@ -1,6 +1,6 @@
 {
   "name": "@chavajs/core",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "chavaJs core — the Laravel-equivalent container, router, ORM, validation, auth, queue, events, mail, notifications and scheduling, in TypeScript.",
   "type": "module",
   "license": "MIT",

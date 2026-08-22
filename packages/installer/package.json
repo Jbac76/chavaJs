@@ -1,6 +1,6 @@
 {
   "name": "@chavajs/installer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "chavaJs installer — the Laravel Installer equivalent. `chava new <name>` scaffolds a ready-to-run chavaJs app, downloading the framework from npm.",
   "type": "module",
   "license": "MIT",
