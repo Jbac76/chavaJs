@@ -25,6 +25,7 @@ import {
   divider,
   info,
   success,
+  warn,
   error,
   selectOption,
   selectYesNo,
@@ -450,6 +451,11 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
     if (existsSync(noauthRoutes)) {
       writeFileSync(join(targetDir, 'routes', 'web.ts'), readFileSync(noauthRoutes));
     }
+    // Auth-free nav: no Users link, no login/register/dashboard entries.
+    const noauthLayout = join(templateDir, 'resources', 'js', 'Layouts', 'AppLayout.noauth.tsx');
+    if (existsSync(noauthLayout)) {
+      writeFileSync(join(targetDir, 'resources', 'js', 'Layouts', 'AppLayout.tsx'), readFileSync(noauthLayout));
+    }
   }
   progress.step();
 
@@ -485,8 +491,33 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
       console.log();
       return;
     }
+
+    // Auth scaffolds are database-backed — migrate now so pages like /users
+    // work out of the box (auth-free scaffolds skip migration entirely).
+    let migrated = false;
+    if (withAuth) {
+      const tty = process.stdout.isTTY;
+      if (tty) process.stdout.write('  ●  Running database migrations…');
+      else console.log('  Running database migrations…');
+      const mig = spawnSync('npm run migrate', { cwd: targetDir, shell: true, stdio: 'pipe', encoding: 'utf8' });
+      if (mig.status === 0) {
+        migrated = true;
+        if (tty) {
+          process.stdout.write('\r\x1b[K');
+          console.log('  ✓  Database migrated.');
+        } else {
+          console.log('  ✓  Database migrated.');
+        }
+      } else {
+        if (tty) process.stdout.write('\r\x1b[K');
+        warn('Migration failed — run `js migrate` inside the app to retry.');
+      }
+    }
   } else {
     progress.step();
+    if (withAuth) {
+      info('Run `js migrate` after installing dependencies.');
+    }
   }
 
   // Show congrats
