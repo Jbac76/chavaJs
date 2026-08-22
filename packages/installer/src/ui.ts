@@ -129,6 +129,7 @@ export async function selectOption(
     const cleanup = () => {
       stdin.removeListener('data', onData);
       stdin.setRawMode(false);
+      stdin.pause(); // release the event loop so the CLI can exit
       stdout.write('\x1b[?25h'); // show cursor
     };
 
@@ -198,6 +199,7 @@ export async function selectYesNo(
     const cleanup = () => {
       stdin.removeListener('data', onData);
       stdin.setRawMode(false);
+      stdin.pause(); // release the event loop so the CLI can exit
       stdout.write('\x1b[?25h'); // show cursor
     };
 
