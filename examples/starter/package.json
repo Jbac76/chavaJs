@@ -30,7 +30,7 @@
     "test:mysql": "node ../../scripts/run-tests-driver.mjs mysql"
   },
   "dependencies": {
-    "@inertiajs/core": "^1.3.0",
+    "@inertiajs/core": "^3.7.0",
     "@tanstack/react-table": "^8.20.5",
     "@inertiajs/react": "^1.3.0",
     "@radix-ui/react-slot": "^1.3.3",
