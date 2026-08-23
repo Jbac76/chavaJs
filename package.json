@@ -22,7 +22,7 @@
     "publish:installer": "npm run build:installer && npm publish ./dist/@chavajs/installer --access public",
     "publish:all": "npm run publish:core && npm run publish:cli && npm run publish:installer",
     "typecheck": "npm run typecheck --prefix examples/starter",
-    "test": "npm test --prefix examples/starter && npm test --prefix packages/installer",
+    "test": "npm test --prefix examples/starter && npm test --prefix packages/installer && npm test --prefix packages/permissions",
     "test:watch": "npm run test:watch --prefix examples/starter",
     "test:coverage": "npm run test:coverage --prefix examples/starter",
     "test:browser": "npm run test:browser --prefix examples/starter",
@@ -54,3 +54,4 @@
     }
   }
 }
+
