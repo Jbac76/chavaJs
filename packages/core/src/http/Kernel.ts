@@ -273,8 +273,12 @@ export class HttpKernel {
       return;
     }
 
-    // AuthorizationException → 403 (Laravel aborts with Forbidden).
-    if (error instanceof AuthorizationException) {
+    // AuthorizationException → 403 (Laravel aborts with Forbidden). Also
+    // covers chava-permissions' UnauthorizedError via its well-known name —
+    // zero package coupling.
+    const unauthorized = error instanceof AuthorizationException ||
+      (error instanceof Error && error.name === 'UnauthorizedError');
+    if (unauthorized) {
       const message = error instanceof Error ? error.message : 'This action is unauthorized.';
       if (request.expectsJson() || request.wantsJson()) {
         const response = this.errorResponse(403, 'forbidden', message);

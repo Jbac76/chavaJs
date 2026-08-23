@@ -17,6 +17,8 @@ export interface ResourceOptions {
   only?: string[];
   except?: string[];
   names?: Record<string, string>;
+  /** Per-verb middleware, e.g. `{ store: ['permission:users.create'] }`. */
+  middleware?: Partial<Record<string, MiddlewareEntry[]>>;
 }
 
 /**
@@ -89,9 +91,24 @@ export class Router {
     for (const [methodName, methods, uri] of actions) {
       if (options.except?.includes(methodName)) continue;
       if (options.only && !options.only.includes(methodName)) continue;
-      this.addRoute(methods, uri, [controller, methodName]).name(
-        options.names?.[methodName] ?? `${name}.${methodName}`,
-      );
+
+      // Per-verb middleware (Laravel: per-action middleware on resources)
+      // merges AFTER the group/registrar middleware.
+      const verbMiddleware = options.middleware?.[methodName] ?? [];
+      const previous = this.attributes;
+      if (verbMiddleware.length > 0) {
+        this.attributes = {
+          ...previous,
+          middleware: [...(previous.middleware ?? []), ...verbMiddleware],
+        };
+      }
+      try {
+        this.addRoute(methods, uri, [controller, methodName]).name(
+          options.names?.[methodName] ?? `${name}.${methodName}`,
+        );
+      } finally {
+        this.attributes = previous;
+      }
     }
   }
 

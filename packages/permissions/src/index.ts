@@ -8,5 +8,6 @@ export type { Authorizer, CreateAuthorizerOptions } from './authorizer';
 export * from './core/types';
 export * from './core/errors';
 export * from './core/Wildcard';
+export * from './core/catalog';
 export type { StoreAdapter, Snapshot, NewPermission, NewRole } from './core/StoreAdapter';
 export { modelKey } from './core/StoreAdapter';

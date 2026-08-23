@@ -108,8 +108,9 @@ export class ValidatorInstance {
         this.addError(field, this.message(field, requiredRule));
         return;
       }
-    } else if (isEmpty && !hasNullable) {
-      // Absent or empty non-required fields pass (Laravel behaviour).
+    } else if (isEmpty) {
+      // Absent or empty non-required fields pass (Laravel behaviour),
+      // including `nullable` ones — `min` etc. must not run on empty input.
       return;
     }
 

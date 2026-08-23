@@ -1,6 +1,6 @@
 {
   "name": "chava-permissions",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Roles & permissions for JavaScript — Spatie Laravel Permission API parity (givePermissionTo, assignRole, syncPermissions, wildcards, guards) with O(1) lookups, zero dependencies, and adapters for memory/file/SQL. First-class chavaJs integration.",
   "type": "module",
   "main": "src/index.ts",

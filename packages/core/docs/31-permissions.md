@@ -86,3 +86,10 @@ const user = authz.user({ id: 1, modelType: 'users' });
 await user.assignRole('writer');
 user.hasPermissionTo('posts.edit');       // true
 ```
+
+## Worked example
+
+The admin Users CRUD (chava new --admin) composes everything on this page:
+resource routes gated by typed users.* permissions, a UserPolicy for
+object rules (self-delete, escalation guards), and Inertia can props - see
+[Admin Dashboard](30-admin-dashboard).

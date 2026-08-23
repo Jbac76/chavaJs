@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import { SEED_PERMISSIONS } from '../../permissions';
 import { bootApp } from '../helpers/boot-app';
 
 /** The five Spatie-schema tables, created idempotently. */
@@ -8,7 +9,7 @@ export function permissionInstallCommand(): Command {
     .action(async () => {
       const app = await bootApp();
       await app.bootstrap();
-      const db = app.make<{ connection: () => { exec(sql: string): Promise<void>; query: (sql: string) => Promise<unknown[]>; run(sql: string, bindings?: unknown[]): Promise<unknown> } }>('db');
+      const db = app.make<{ connection: () => { exec(sql: string): Promise<void>; query(sql: string, bindings?: unknown[]): Promise<unknown[]>; run(sql: string, bindings?: unknown[]): Promise<unknown> } }>('db');
       const conn = db.connection();
 
       const statements = [
@@ -20,9 +21,17 @@ export function permissionInstallCommand(): Command {
       ];
       for (const sql of statements) await conn.exec(sql);
 
-      // Convenience seed: super-admin role with the wildcard permission.
-      const existing = await conn.query("SELECT id FROM roles WHERE name = 'super-admin'");
-      if (existing.length === 0) {
+      // Convenience seed: super-admin role with wildcard + the typed CRUD
+      // catalog (users.view ... settings.delete) generated from
+      // `${Entity}.${Verb}` template literal types.
+      for (const name of SEED_PERMISSIONS) {
+        const exists = await conn.query('SELECT id FROM permissions WHERE name = ?', [name]);
+        if (exists.length === 0) {
+          await conn.run('INSERT INTO permissions (name, guard_name) VALUES (?, ?)', [name, 'web']);
+        }
+      }
+      const existingSuper = await conn.query("SELECT id FROM roles WHERE name = 'super-admin'");
+      if (existingSuper.length === 0) {
         await conn.exec(`INSERT INTO roles (name, guard_name) VALUES ('super-admin', 'web')`);
         await conn.exec(`INSERT INTO permissions (name, guard_name) VALUES ('*', 'web')`);
         const roleRow = await conn.query(`SELECT id FROM roles WHERE name = 'super-admin'`);
@@ -30,6 +39,7 @@ export function permissionInstallCommand(): Command {
         await conn.run('INSERT OR IGNORE INTO role_has_permissions (permission_id, role_id) VALUES (?, ?)', [(permRow[0] as { id: number }).id, (roleRow[0] as { id: number }).id]);
         console.log('  Seeded role: super-admin (wildcard *)');
       }
+      console.log(`  Seeded permissions: ${SEED_PERMISSIONS.join(', ')}`);
 
       console.log('Permissions tables installed (5 tables).');
     });

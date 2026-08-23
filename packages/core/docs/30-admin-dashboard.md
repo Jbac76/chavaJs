@@ -86,6 +86,25 @@ A live matrix of roles x permissions. Click any cell to grant/revoke — each
 change is saved transactionally through `registrar.syncRolePermissions`.
 
 ## Users page
+## Users page - full CRUD with live search
 
-Search across configurable columns, paginate, and assign roles inline
-(`syncModelRoles` inside a transaction — no partial states).
+A TanStack Table (live client-side filter + sortable columns) over the
+Laravel-style resource controller (`Route.resource('users', ...)`):
+create / show / edit / update / destroy with FormRequest validation,
+route-model binding and flash feedback.
+
+### Authorization matrix
+
+| Action | RBAC middleware | Policy rule |
+|---|---|---|
+| list / search | `permission:users.view` | - |
+| create | `permission:users.create` | - |
+| update / roles sync | `permission:users.update` | super-admin targets editable only by super-admins |
+| delete | `permission:users.delete` | cannot delete yourself; cannot delete a super-admin unless you are one |
+
+Both layers must pass: the middleware checks the role-level permission, the
+`UserPolicy` adds object rules through the Gate. Row buttons are rendered from
+server-computed `can` props so hidden actions never reach the server either.
+
+Permission names come from the typed catalog in chava-permissions
+(`${Entity}.${Verb}` template literal types) - typos are compile errors.

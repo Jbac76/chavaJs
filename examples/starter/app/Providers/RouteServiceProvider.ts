@@ -19,6 +19,8 @@ export class RouteServiceProvider extends ServiceProvider {
 
     await router.middleware('web').group(() => import('../../routes/web'));
     await router.middleware('api').prefix('api').group(() => import('../../routes/api'));
+    // Admin area - inside the web group so sessions/CSRF apply.
+    await router.middleware('web').group(() => import('../../routes/admin'));
     await import('../../routes/console');
   }
 }
