@@ -74,6 +74,22 @@ const AUTH_PATHS = [
 /** Runtime storage directories created empty in the scaffold. */
 const STORAGE_DIRS = ['logs', 'framework/sessions', 'framework/cache', 'app'];
 
+/**
+ * Tear down interactive stdin handles, let libuv close them, THEN exit.
+ * Calling process.exit() while a raw-mode stdin handle is mid-close triggers
+ * `Assertion failed: !(handle->flags & UV_HANDLE_CLOSING)` on Windows.
+ */
+async function gracefulExit(code: number): Promise<never> {
+  try {
+    stdin.setRawMode(false);
+  } catch {
+    // stdin may not support raw mode in this context
+  }
+  stdin.pause();
+  await new Promise((resolve) => setImmediate(resolve));
+  process.exit(code);
+}
+
 function slugify(name: string): string {
   return name
     .toLowerCase()
@@ -323,12 +339,18 @@ async function collectOptions(options: NewOptions): Promise<Required<Pick<NewOpt
   let packageManager = options.packageManager;
 
   if (!name) {
-    if (!interactive) { error('Please provide an application name: chava new <name>'); process.exit(1); }
+    if (!interactive) {
+      error('Please provide an application name: chava new <name>');
+      await gracefulExit(1);
+    }
     const rl = createInterface({ input: stdin, output: stdout });
     name = (await rl.question('  Application name: ')).trim();
     rl.close();
   }
-  if (!name) { error('An application name is required.'); process.exit(1); }
+  if (!name) {
+    error('An application name is required.');
+    await gracefulExit(1);
+  }
 
   console.log();
 
@@ -339,7 +361,7 @@ async function collectOptions(options: NewOptions): Promise<Required<Pick<NewOpt
   }
   if (!DB_ENGINES.includes(database)) {
     error(`Unknown database engine [${database}]. Choose: ${DB_ENGINES.join(', ')}`);
-    process.exit(1);
+    await gracefulExit(1);
   }
 
   if (withAuth === undefined) {
@@ -389,7 +411,10 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
   const targetDir = resolve(process.cwd(), name);
 
   if (existsSync(targetDir) && readdirSync(targetDir).length > 0) {
-    throw new Error(`Directory [${name}] already exists and is not empty.`);
+    console.log();
+    error(`Directory "${name}" already exists and is not empty.`);
+    info(`Remove it, or choose a different name: chava new ${name}-2`);
+    await gracefulExit(1);
   }
 
   // Show logo and summary
