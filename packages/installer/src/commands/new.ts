@@ -475,6 +475,8 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
       );
       writeFileSync(rspPath, source);
     }
+  } else if (withAdmin) {
+    warn('Admin dashboard template missing from the resolved framework - update @chavajs/cli.');
   }
   progress.step();
 
@@ -571,14 +573,15 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
       const tty = process.stdout.isTTY;
       if (tty) process.stdout.write('  ●  Running database migrations…');
       else console.log('  Running database migrations…');
-      const mig = spawnSync('node bin/chava.js migrate', { cwd: targetDir, shell: true, stdio: 'pipe', encoding: 'utf8' });
+      const migRaw = spawnSync('node bin/chava.js migrate', { cwd: targetDir, shell: true, stdio: ['ignore','pipe','pipe'], encoding: 'utf8' });
+      const mig = { status: migRaw.status ?? 1, output: ((migRaw.stderr || '') + ' ' + (migRaw.stdout || '')).split('\n').filter(Boolean).slice(-4).join(' | ') };
       const report = (ok: boolean, doneLine: string, warnLine: string): void => {
         if (tty) process.stdout.write('\r\x1b[K');
         if (ok) console.log(`  ✓  ${doneLine}`);
         else warn(warnLine);
       };
       migrated = mig.status === 0;
-      report(migrated, 'Database migrated.', 'Migration failed — run `js migrate` inside the app to retry.');
+      report(migrated, 'Database migrated.', 'Migration failed' + (mig.output ? ' — ' + mig.output : '') + ' — run `js migrate` inside the app to retry.');
 
       // Admin scaffolds provision the dashboard account automatically.
       // Uses the app's OWN bin (node bin/chava.js) — never `npx js`, which
@@ -587,15 +590,32 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
         if (tty) process.stdout.write('  ●  Provisioning admin account…');
         else console.log('  Provisioning admin account…');
         const appBin = `node bin/chava.js`;
-        const seed = spawnSync(`${packageManager} run db:seed`, { cwd: targetDir, shell: true, stdio: 'pipe', encoding: 'utf8' });
-        const permInstall = seed.status === 0
-          ? spawnSync(`${appBin} permission:install`, { cwd: targetDir, shell: true, stdio: 'pipe', encoding: 'utf8' })
-          : { status: 1 };
+        const run = (cmd: string): { status: number; output: string } => {
+          const result = spawnSync(cmd, {
+            cwd: targetDir, shell: true, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8",
+          });
+          const tail = (s: string | undefined): string => (s ?? "").split("\n").filter(Boolean).slice(-4).join(" | ").trim();
+          return { status: result.status ?? 1, output: tail(result.stdout) || tail(result.stderr) };
+        };
+        const seed = run(`${packageManager} run db:seed`);
+        const permInstall = seed.status === 0 ? run(`${appBin} permission:install`) : { status: 1, output: "" };
         const assign = permInstall.status === 0
-          ? spawnSync(`${appBin} permission:assign super-admin admin@chavajs.com`, { cwd: targetDir, shell: true, stdio: 'pipe', encoding: 'utf8' })
-          : { status: 1 };
+          ? run(`${appBin} permission:assign super-admin admin@chavajs.com`)
+          : { status: 1, output: "" };
         adminReady = assign.status === 0;
-        report(adminReady, 'Admin account ready.', 'Admin provisioning failed — run `js db:seed`, `js permission:install` and `js permission:assign super-admin <email>` manually.');
+        if (adminReady) {
+          report(true, "Admin account ready.", "");
+        } else {
+          // Surface WHICH step failed and why so users can self-recover.
+          const failedStep = seed.status !== 0 ? "db:seed" : permInstall.status !== 0 ? "permission:install" : "permission:assign";
+          report(false, "", `Admin provisioning failed at "${failedStep}" - run manually:`);
+          console.log(`     cd ${name}`);
+          if (failedStep === "db:seed") console.log(`     ${packageManager} run db:seed`);
+          if (failedStep !== "db:seed") console.log("     node bin/chava.js permission:install");
+          if (failedStep === "permission:assign") console.log("     node bin/chava.js permission:assign super-admin admin@chavajs.com");
+          const stepOutput = failedStep === "db:seed" ? seed.output : failedStep === "permission:install" ? permInstall.output : assign.output;
+          if (stepOutput) console.log(`     output: ${stepOutput}`);
+        }
       }
     }
   } else {

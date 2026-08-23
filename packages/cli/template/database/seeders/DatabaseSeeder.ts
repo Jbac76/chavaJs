@@ -4,39 +4,47 @@ import { User } from '../../app/Models/User';
 import { PostFactory } from '../factories/PostFactory';
 import { UserFactory } from '../factories/UserFactory';
 
+/**
+ * Idempotent demo seeder - safe to run any number of times.
+ * Existing accounts are updated in place (Laravel: firstOrNew + save).
+ */
 export class DatabaseSeeder extends Seeder {
   public async run(): Promise<void> {
     const hashed = await Hash.make('password');
 
-    // One admin + 7 regular users — all with the demo password 'password'.
-    const admin = await User.create({
-      name: 'Admin User',
-      email: 'admin@chavajs.com',
-      password: hashed,
-      is_admin: true,
-      email_verified_at: new Date(),
-    });
+    // One admin + one member, both with the demo password 'password'.
+    const admin = (await User.where('email', 'admin@chavajs.com').first()) ?? new User();
+    admin.setAttribute('name', 'Admin User');
+    admin.setAttribute('email', 'admin@chavajs.com');
+    admin.setAttribute('password', hashed);
+    admin.setAttribute('is_admin', true);
+    admin.setAttribute('email_verified_at', new Date());
+    // Hydrated instances save as UPDATE; fresh ones INSERT (Laravel save()).
+    await admin.save();
 
-    // A known non-admin account for demos / E2E: member@chavajs.com / password.
-    const member = await User.create({
-      name: 'Member User',
-      email: 'member@chavajs.com',
-      password: hashed,
-      is_admin: false,
-      email_verified_at: new Date(),
-    });
+    // A known non-admin account for demos / E2E.
+    const member = (await User.where('email', 'member@chavajs.com').first()) ?? new User();
+    member.setAttribute('name', 'Member User');
+    member.setAttribute('email', 'member@chavajs.com');
+    member.setAttribute('password', hashed);
+    member.setAttribute('is_admin', false);
+    member.setAttribute('email_verified_at', new Date());
+    await member.save();
 
-    const regular = (await UserFactory.new().count(6).create()) as User[];
-    const users = [admin, member, ...regular];
-
-    for (const user of users) {
-      if (user !== admin) {
-        user.setAttribute('password', hashed);
-        user.setAttribute('email_verified_at', new Date());
-        await user.save();
+    // Extra demo users + posts only on first seed (keeps re-seeds fast).
+    const alreadySeeded = (await User.where('email', 'like', '%@example.com').first());
+    if (!alreadySeeded) {
+      const regular = (await UserFactory.new().count(6).create()) as User[];
+      const users = [admin, member, ...regular];
+      for (const user of users) {
+        if (!user.getAttribute('email_verified_at')) {
+          user.setAttribute('password', hashed);
+          user.setAttribute('email_verified_at', new Date());
+          await user.save();
+        }
+        // ->for($user) sets user_id from the parent; two posts per user.
+        await PostFactory.new().count(2).for(user).create();
       }
-      // ->for($user) sets user_id from the parent; two posts per user.
-      await PostFactory.new().count(2).for(user).create();
     }
   }
 }

@@ -76,11 +76,14 @@ export async function fetchCore(version = 'latest'): Promise<string> {
   const cacheRoot = join(homedir(), '.chava', 'core');
   const cached = join(cacheRoot, meta.version);
 
-  // Already cached with CLI + inertia adapter merged? Return early.
+  // Already cached with CLI + inertia adapter + commands parity? Return early.
+  // The permission-assign marker catches caches built from older @chavajs/cli
+  // tarballs that lack newer commands — those get rebuilt automatically.
   if (
     existsSync(join(cached, 'src', 'foundation', 'Application.ts')) &&
     existsSync(join(cached, 'src', 'cli', 'index.ts')) &&
-    existsSync(join(cached, 'src', 'inertia', 'HtmlRenderer.ts'))
+    existsSync(join(cached, 'src', 'inertia', 'HtmlRenderer.ts')) &&
+    existsSync(join(cached, 'src', 'cli', 'commands', 'permission-assign.ts'))
   ) {
     return cached;
   }
@@ -103,7 +106,7 @@ export async function fetchCore(version = 'latest'): Promise<string> {
     // 2. Download and extract @chavajs/cli, merge into core layout.
     const cliDir = join(tmp, 'cli');
     mkdirSync(cliDir, { recursive: true });
-    await downloadPkg('@chavajs/cli', version, cliDir);
+    await downloadPkg('@chavajs/cli', 'latest', cliDir);
 
     // Merge: cli/src/ → core/src/cli/
     const cliSrc = join(cliDir, 'src');
@@ -134,7 +137,7 @@ export async function fetchCore(version = 'latest'): Promise<string> {
     try {
       const inertiaDir = join(tmp, 'inertia');
       mkdirSync(inertiaDir, { recursive: true });
-      await downloadPkg('@chavajs/inertia-react', version, inertiaDir);
+      await downloadPkg('@chavajs/inertia-react', meta.version, inertiaDir).catch(async () => downloadPkg('@chavajs/inertia-react', 'latest', inertiaDir));
       const inertiaSrc = join(inertiaDir, 'src');
       if (existsSync(join(inertiaSrc, 'HtmlRenderer.ts'))) {
         copyTree(inertiaSrc, join(coreDir, 'src', 'inertia'));
@@ -148,7 +151,7 @@ export async function fetchCore(version = 'latest'): Promise<string> {
     try {
       const permDir = join(tmp, 'permissions');
       mkdirSync(permDir, { recursive: true });
-      await downloadPkg('chava-permissions', version, permDir).catch(async () => downloadPkg('chava-permissions', 'latest', permDir));
+      await downloadPkg('chava-permissions', meta.version, permDir).catch(async () => downloadPkg('chava-permissions', 'latest', permDir));
       const permSrc = join(permDir, 'src');
       if (existsSync(join(permSrc, 'core', 'Registrar.ts'))) {
         copyTree(permSrc, join(coreDir, 'src', 'permissions'));
