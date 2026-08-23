@@ -1954,7 +1954,7 @@ js tinker
 chava> await User.count()
 9
 chava> user = await User.find(1)
-User { id: 1, name: 'Admin User', email: 'admin@chava.dev', … }
+User { id: 1, name: 'Admin User', email: 'admin@chavajs.com', … }
 chava> user.posts()  # relations work too
 chava> DB.table('users').where('is_admin', 1).pluck('email')
 chava> exit()

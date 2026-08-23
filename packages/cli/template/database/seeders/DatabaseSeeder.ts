@@ -11,16 +11,16 @@ export class DatabaseSeeder extends Seeder {
     // One admin + 7 regular users — all with the demo password 'password'.
     const admin = await User.create({
       name: 'Admin User',
-      email: 'admin@chava.dev',
+      email: 'admin@chavajs.com',
       password: hashed,
       is_admin: true,
       email_verified_at: new Date(),
     });
 
-    // A known non-admin account for demos / E2E: member@chava.dev / password.
+    // A known non-admin account for demos / E2E: member@chavajs.com / password.
     const member = await User.create({
       name: 'Member User',
-      email: 'member@chava.dev',
+      email: 'member@chavajs.com',
       password: hashed,
       is_admin: false,
       email_verified_at: new Date(),

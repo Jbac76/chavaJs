@@ -446,7 +446,7 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
       );
       source = source.replace(
         "await import('../../routes/console');",
-        "if (existsSync(join(process.cwd(), 'routes', 'admin.ts'))) {\n      await import('../../routes/admin');\n    }\n    await import('../../routes/console');",
+        "// Admin area - inside the web group so sessions/CSRF apply.\n    await router.middleware('web').group(() => import('../../routes/admin'));\n    await import('../../routes/console');",
       );
       writeFileSync(rspPath, source);
     }

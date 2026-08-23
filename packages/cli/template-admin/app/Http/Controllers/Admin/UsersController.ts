@@ -17,7 +17,7 @@ export class AdminUsersController extends Controller {
   public async index(request: Request) {
     const config = (await import('../../../../config/admin')).default;
     const registrar = currentApp().make<RegistrarLike>('permissions');
-    const search = String(request.query('q', ''));
+    const search = String(request.input('q', ''));
     const perPage = config.users.perPage;
 
     let query = User.query().orderBy('created_at', 'desc');

@@ -59,7 +59,8 @@ The seeded `super-admin` role holds `*` and bypasses the Gate entirely.
 | `js permission:install` | Create tables + seed super-admin |
 | `js permission:create permission <name>` | Idempotent create |
 | `js permission:create role <name>` | Idempotent create |
-| `js permission:show` | List roles and their permissions |
+| js permission:show | List roles and their permissions |
+| js permission:assign <role> <id\\|email> | Grant a role to a user - the way you bootstrap your first admin |
 
 ## Inertia
 

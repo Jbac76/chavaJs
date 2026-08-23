@@ -39,6 +39,7 @@ import { routeListCommand } from './commands/route-list';
 import { routeCacheCommand } from './commands/route-cache';
 import { permissionInstallCommand } from './commands/permission-install';
 import { permissionShowCommand, permissionCreateCommand } from './commands/permission-manage';
+import { permissionAssignCommand } from './commands/permission-assign';
 import { routeClearCommand } from './commands/route-clear';
 import { scheduleListCommand, scheduleRunCommand } from './commands/schedule-run';
 import { serveCommand } from './commands/serve';
@@ -59,6 +60,7 @@ export async function run(): Promise<void> {
 program.addCommand(permissionInstallCommand());
 program.addCommand(permissionShowCommand());
 program.addCommand(permissionCreateCommand());
+program.addCommand(permissionAssignCommand());
   program.addCommand(migrateCommand());
   program.addCommand(migrateRollbackCommand());
   program.addCommand(migrateFreshCommand());

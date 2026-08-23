@@ -178,22 +178,28 @@ export class RoleMiddleware {
   public async handle(request: Request, next: NextFunction, ...roles: string[]): Promise<Response> {
     void request;
     const registrar = this.app.make<Registrar>('permissions');
-    const userId = this.currentUserId();
+    const userId = await this.currentUserId();
     if (!userId || !roles.some((role) => registrar.hasRole('users', userId, role))) {
       throw new UnauthorizedError(`None of the required roles [${roles.join(', ')}] are present.`);
     }
     return next();
   }
 
-  protected currentUserId(): number | string | null {
+  protected async currentUserId(): Promise<number | string | null> {
     return resolveAuthUserId(this.app);
   }
 }
 
 export class PermissionMiddleware extends RoleMiddleware {
+  // Explicit constructor: the container resolves dependencies by parameter
+  // name from the declared constructor — an inherited one yields no params.
+  public constructor(app: Application) {
+    super(app);
+  }
+
   public async handle(request: Request, next: NextFunction, ...permissions: string[]): Promise<Response> {
     const registrar = this.app.make<Registrar>('permissions');
-    const userId = resolveAuthUserId(this.app);
+    const userId = await resolveAuthUserId(this.app);
     if (!userId || !permissions.some((name) => registrar.hasPermissionTo('users', userId, name))) {
       throw new UnauthorizedError(`None of the required permissions [${permissions.join(', ')}] are present.`);
     }
@@ -203,11 +209,10 @@ export class PermissionMiddleware extends RoleMiddleware {
 }
 
 /** Resolve the authenticated user's id through the container auth manager. */
-function resolveAuthUserId(app: Application): number | string | null {
+async function resolveAuthUserId(app: Application): Promise<number | string | null> {
   try {
-    const auth = app.make<{ user?(): { id?: unknown } | null }>('auth');
-    const user = typeof auth.user === 'function' ? auth.user() : null;
-    const id: unknown = user?.id;
+    const auth = app.make<{ id: (guard?: string) => Promise<unknown> }>('auth');
+    const id: unknown = await auth.id();
     if (id === null || id === undefined) return null;
     return typeof id === 'number' ? id : String(id);
   } catch {
@@ -241,9 +246,9 @@ export class PermissionsServiceProvider extends ServiceProvider {
 
       // Gate bridge: wildcard superusers pass every ability check.
       const gate = this.app.make<{ before: (cb: unknown) => unknown }>('gate');
-      gate.before((subject: unknown, ability: string) => {
+      gate.before(async (subject: unknown, ability: string) => {
         void subject;
-        const userId = resolveAuthUserId(this.app);
+        const userId = await resolveAuthUserId(this.app);
         if (userId && registrar.hasRole('users', userId, 'super-admin')) return true;
         if (userId && registrar.hasPermissionTo('users', userId, ability)) return true;
         return undefined; // fall through to policies/abilities

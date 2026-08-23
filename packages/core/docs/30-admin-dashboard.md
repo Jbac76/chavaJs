@@ -45,19 +45,35 @@ export default {
 - **Remove one**: delete the entry (+ files). The app still compiles.
 - **Rebrand**: change `name`; the sidebar and titles follow.
 
-## First login
+## Getting in as an admin
 
-1. `js migrate && js db:seed` then `js permission:install`
-2. Grant yourself the super-admin role:
+1. **Create the tables and your account**
 
-   ```sql
-   INSERT INTO model_has_roles (role_id, model_type, model_id)
-   SELECT id, 'users', '<your-user-id>' FROM roles WHERE name = 'super-admin';
+   ```bash
+   js migrate && js db:seed     # users table + demo data
+   js permission:install        # roles/permissions tables + super-admin role
    ```
 
-3. Sign in and open `/admin`. The wildcard `*` permission means super-admins
-   see every section; other roles only see nav items whose
-   `permission:` they hold — and direct URL entry returns **403**.
+2. **Register yourself** at `/register` (or use a seeded user's email), then
+   grant your account the admin role:
+
+   ```bash
+   # by email...
+   js permission:assign super-admin you@example.com
+   # ...or by id
+   js permission:assign super-admin 1
+   ```
+
+3. **Sign in and open /admin.** You are now a full admin.
+
+How it works:
+
+- The wildcard `*` permission held by `super-admin` satisfies every check, so
+  admins see all sidebar sections.
+- Any other user only sees nav items whose `permission:` they hold; entering a
+  forbidden URL directly returns **403**.
+- To promote more users later, repeat step 2 - or manage roles graphically
+  from the dashboard's Users page once you are signed in as an admin.
 
 ## Roles & Permissions page
 
