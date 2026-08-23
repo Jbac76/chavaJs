@@ -517,6 +517,8 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
   progress.step();
 
   // 7. Install dependencies (unless --skip-install).
+    let migrated = false;
+    let adminReady = false;
   if (!opts.skipInstall) {
     // Clear the Progress active line so ProgressBar renders cleanly.
     progress.clear();
@@ -540,23 +542,32 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
 
     // Auth scaffolds are database-backed — migrate now so pages like /users
     // work out of the box (auth-free scaffolds skip migration entirely).
-    let migrated = false;
     if (withAuth) {
       const tty = process.stdout.isTTY;
       if (tty) process.stdout.write('  ●  Running database migrations…');
       else console.log('  Running database migrations…');
       const mig = spawnSync('npm run migrate', { cwd: targetDir, shell: true, stdio: 'pipe', encoding: 'utf8' });
-      if (mig.status === 0) {
-        migrated = true;
-        if (tty) {
-          process.stdout.write('\r\x1b[K');
-          console.log('  ✓  Database migrated.');
-        } else {
-          console.log('  ✓  Database migrated.');
-        }
-      } else {
+      const report = (ok: boolean, doneLine: string, warnLine: string): void => {
         if (tty) process.stdout.write('\r\x1b[K');
-        warn('Migration failed — run `js migrate` inside the app to retry.');
+        if (ok) console.log(`  ✓  ${doneLine}`);
+        else warn(warnLine);
+      };
+      migrated = mig.status === 0;
+      report(migrated, 'Database migrated.', 'Migration failed — run `js migrate` inside the app to retry.');
+
+      // Admin scaffolds provision the dashboard account automatically.
+      if (withAdmin && migrated) {
+        if (tty) process.stdout.write('  ●  Provisioning admin account…');
+        else console.log('  Provisioning admin account…');
+        const seed = spawnSync('npm run db:seed', { cwd: targetDir, shell: true, stdio: 'pipe', encoding: 'utf8' });
+        const permInstall = seed.status === 0
+          ? spawnSync('npx js permission:install', { cwd: targetDir, shell: true, stdio: 'pipe', encoding: 'utf8' })
+          : { status: 1 };
+        const assign = permInstall.status === 0
+          ? spawnSync('npx js permission:assign super-admin admin@chavajs.com', { cwd: targetDir, shell: true, stdio: 'pipe', encoding: 'utf8' })
+          : { status: 1 };
+        adminReady = assign.status === 0;
+        report(adminReady, 'Admin account ready.', 'Admin provisioning failed — run `js db:seed`, `js permission:install` and `js permission:assign super-admin <email>` manually.');
       }
     }
   } else {
@@ -567,7 +578,7 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
   }
 
   // Show congrats
-  printCongrats(name, includeDocs);
+  printCongrats(name, includeDocs, withAdmin && adminReady ? { email: 'admin@chavajs.com', password: 'password' } : undefined);
 }
 
 export function newProjectCommand(): Command {

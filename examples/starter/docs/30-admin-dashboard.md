@@ -46,6 +46,11 @@ export default {
 - **Rebrand**: change `name`; the sidebar and titles follow.
 
 ## Getting in as an admin
+> **Chose `--admin` during `chava new`?** Skip steps 1-2 - the installer already
+> migrated, seeded, installed permissions, assigned super-admin to the seeded
+> account (`admin@chavajs.com` / `password`) and printed the credentials.
+> Just sign in at `/login` and open `/admin`.
+
 
 1. **Create the tables and your account**
 

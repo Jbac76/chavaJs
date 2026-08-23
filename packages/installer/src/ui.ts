@@ -47,7 +47,7 @@ export function printLogo(): void {
 
 // ------------------------------------------------------------------ congrats
 
-export function printCongrats(name: string, includeDocs: boolean): void {
+export function printCongrats(name: string, includeDocs: boolean, admin?: { email: string; password: string }): void {
   console.log();
   console.log(`${ORANGE}  ═══════════════════════════════════════════════════════${RESET}`);
   console.log();
@@ -62,6 +62,14 @@ export function printCongrats(name: string, includeDocs: boolean): void {
   console.log(`    ${ORANGE}js${RESET} db:seed`);
   console.log(`    ${ORANGE}npm run${RESET} dev                  ${DIM}→ http://localhost:8080${RESET}${includeDocs ? `  ${DIM}(docs at /docs)${RESET}` : ''}`);
   console.log();
+
+  if (admin) {
+    console.log(`  ${BOLD}Admin dashboard:${RESET}   ${ORANGE}/admin${RESET}`);
+    console.log(`  ${BOLD}Login email:${RESET}       ${pc.white(admin.email)}`);
+    console.log(`  ${BOLD}Login password:${RESET}    ${pc.white(admin.password)}`);
+    console.log();
+  }
+
   console.log(`  ${DIM}\`js\` is your Artisan-equivalent command.${RESET}`);
   console.log(`  ${DIM}Works with a global @chavajs/cli install, or \`npx js <command>\`${RESET}`);
   console.log();
