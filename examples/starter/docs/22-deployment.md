@@ -152,12 +152,27 @@ Route.get('/health', () => ({ status: 'ok', timestamp: Date.now() }));
 
 ## Graceful shutdown
 
-The server handles `SIGTERM` and `SIGINT` for graceful shutdown — important
+The server handles `SIGTERM` and `SIGINT` for graceful shutdown - important
 for zero-downtime deploys:
 
 ```bash
 kill -SIGTERM <pid>
 # server finishes in-flight requests, then exits
+```
+
+The full drain sequence:
+
+1. Stop accepting new connections (`server.close()`).
+2. Wait for in-flight requests to finish.
+3. Idle keep-alive sockets are dropped after 2s so the drain completes.
+4. `app.shutdown()` tears down services — cache timers stopped, database
+   connection pools closed.
+5. A 30-second watchdog force-exits if anything hangs.
+
+```bash
+# verify locally
+node bin/js.js serve & sleep 2; kill -SIGTERM %1
+# → INFO SIGTERM received — draining connections… → INFO Shutdown complete.
 ```
 
 ## Environment summary

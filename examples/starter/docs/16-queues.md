@@ -36,7 +36,7 @@ export class SendWelcomeEmail extends Job {
 |----------|-------------|
 | `queue` | The queue name to dispatch to (default: `default`) |
 | `tries` | Max attempts before the job is marked as failed (default: `undefined` = infinite) |
-| `backoff` | Seconds to wait between retries |
+| `backoff` | Seconds to wait between retries — a number, or an array of per-attempt delays |
 | `timeout` | Seconds before the job is killed (default: `60`) |
 | `connection` | Queue connection to use (overrides `QUEUE_CONNECTION`) |
 
@@ -50,6 +50,22 @@ export class ProcessReport extends Job {
   public async handle(): Promise<void> {
     // long-running work
   }
+}
+```
+
+### Backoff strategies
+
+A numeric `backoff` applies the same delay to every retry. An **array** gives
+a delay per attempt (the last value repeats) — the default is `[3, 15, 60]`,
+so a failing job waits 3s, then 15s, then 60s instead of hammering a struggling
+dependency at a constant rate:
+
+```ts
+export class SyncWithSlowApi extends Job {
+  public tries = 4;
+  public backoff = [5, 30, 120, 600]; // escalating waits per attempt
+
+  public async handle(): Promise<void> { /* ... */ }
 }
 ```
 

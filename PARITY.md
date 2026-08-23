@@ -31,6 +31,9 @@ deliberate deviations. Statuses: `planned` · `in-progress` · `done` · `wontfi
 | Middleware (`handle($request, $next)`) | `handle(request, next)` | `done` | Global / group / route-level; `handle(request, next)` exactly |
 | `web` / `api` middleware groups | `groupMiddleware('web', …)` | `done` | |
 | `VerifyCsrfToken` / session middleware | `StartSession` + `VerifyCsrfToken` in the `web` group | `done` | XSRF cookie + `X-XSRF-TOKEN` header flow, 419 on mismatch | |
+| `HandleCors` | global CORS in `HttpKernel` (via `HandleCors.ts`) | `done` | Origin allow-list, preflight 204, credentials, `Vary: Origin`; `config/cors.ts` |
+| Roles & permissions (spatie/laravel-permission) | `chava-permissions` (`src/permissions/*`) | done | Registrar with O(1) lookups, wildcards, guards, five-table Spatie schema, role:/permission: middleware, Gate bridge, Inertia can/roles props |
+| Admin dashboard scaffold | `template-admin` overlay + `config/admin.ts` | done | Nav-driven routes, permission-filtered sidebar, users & roles management UI |
 | `Illuminate\Http\Request` | `src/http/Request.ts` | `done` | `input()`, `only()`, `except()`, `header()`, `cookie()`, `file()` (multipart), `expectsJson()`, `_method` spoofing |
 | `request->validate()` | `request.validate(rules)` | `done` | Inline validation via the Validator; Form Requests for classes |
 | Controllers (`index/show/create/store/edit/update/destroy`) | class-based controllers + single-action | `done` | Method injection of `request` and route params |
@@ -63,7 +66,7 @@ deliberate deviations. Statuses: `planned` · `in-progress` · `done` · `wontfi
 | `Validator::make($data, $rules)` | `Validator.make(data, rules, messages)` in `src/validation/Validator.ts` | `done` | Pipe-delimited rule strings (`required|email|max:255`), `unique:table,column` (ignores current row), `exists`, `confirmed`, `regex`, `sometimes`, `nullable`, custom rules; Laravel-exact messages (`validation.required` etc.) |
 | Form Requests (`$this->validate()`, `authorize()`) | `src/validation/FormRequest.ts` | `done` | `rules()` / `authorize()` / `messages()`; failures throw `ValidationException` (422 for JSON, redirect-back with flashed `errors` + `old` input for HTML/Inertia) |
 | `request->validate()` | `request.validate()` | `done` | Shorthand for inline validation |
-| Sessions (`StartSession`, flash, `old()`, CSRF) | `src/session/*` + `StartSession` + `VerifyCsrfToken` | `done` | File/array drivers, signed cookies, flash + reflash + keep, CSRF token, session regeneration on login |
+| Sessions (`StartSession`, flash, `old()`, CSRF) | `src/session/*` + `StartSession` + `VerifyCsrfToken` | `done` | File/array drivers, signed cookies, flash + reflash + keep, CSRF token, session regeneration on login, server-side idle expiry (`_last_activity`) |
 | `XSRF-TOKEN` cookie + `X-XSRF-TOKEN` header | `VerifyCsrfToken` sets the cookie; accepts `_token` input, `X-CSRF-TOKEN`, and `X-XSRF-TOKEN` | `done` | This is how Breeze + Inertia work in the browser (Inertia's axios client echoes the cookie); no meta tag |
 | Session auth (`Auth::attempt()`, `login()`, `logout()`) | `Auth.attempt()`, `SessionGuard` | `done` | `AuthManager` with per-request guards, `request.user()` |
 | Sanctum personal access tokens | `TokenGuard` + `PersonalAccessToken` model + `user.createToken()` | `done` | Tokens stored sha256-hashed, `expires_at` support, `auth:api` guard |
@@ -81,7 +84,7 @@ deliberate deviations. Statuses: `planned` · `in-progress` · `done` · `wontfi
 | Events + Listeners (`Event::dispatch`, auto-discovery) | `Event.dispatch()` / `Event.listen()` in `src/events/Dispatcher.ts` | `done` | Listeners in `app/Listeners/*.ts` are auto-discovered by the `handle(event: SomeEvent)` type-hint, read from source (types are erased at runtime) — Laravel's EventServiceProvider discovery contract |
 | Event classes | `app/Events/*.ts` (e.g. `UserRegistered`) | `done` | Plain classes carrying payload |
 | `once()` / `forget()` | `Event.once()` / `Event.forget()` | `done` | |
-| Jobs (`ShouldQueue`) | `Job` base in `src/queue/Job.ts` | `done` | `tries`, `backoff`, `timeout`, `queue`, `delay`; serialization stores class + data; `app/Jobs/*` auto-discovered by `queue:work` |
+| Jobs (`ShouldQueue`) | `Job` base in `src/queue/Job.ts` | `done` | `tries`, `backoff` (number or per-attempt array), `timeout`, `queue`, `delay`; serialization stores class + data; `app/Jobs/*` auto-discovered by `queue:work` |
 | ShouldQueue **listeners** | `ShouldQueue` marker base + `CallQueuedListener` job (`src/events/queue.ts`) | `done` | A listener extending `ShouldQueue` is dispatched as a job instead of running in the request (mail can never break signup). Events are serialized with `SerializesModels`-style markers (models become class + key, re-fetched on the worker). Static `connection` / `queue` / `delay` / `tries` config honoured |
 | Queue drivers (sync / database / redis) | `QueueManager` + `SyncDriver` / `DatabaseDriver` / `RedisDriver` | `done` | Database driver: `jobs` + `failed_jobs` tables, reservation, retries with backoff, failed-jobs tracking; Redis (BullMQ) is optional (`npm i bullmq ioredis`) |
 | `Queue::push()` / `Queue::later()` | `Queue.push(job)` / `Queue.later(sec, job)` | `done` | |

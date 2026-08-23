@@ -37,6 +37,8 @@ import { queueFlushCommand, queueRetryCommand } from './commands/queue-retry';
 import { queueWorkCommand } from './commands/queue-work';
 import { routeListCommand } from './commands/route-list';
 import { routeCacheCommand } from './commands/route-cache';
+import { permissionInstallCommand } from './commands/permission-install';
+import { permissionShowCommand, permissionCreateCommand } from './commands/permission-manage';
 import { routeClearCommand } from './commands/route-clear';
 import { scheduleListCommand, scheduleRunCommand } from './commands/schedule-run';
 import { serveCommand } from './commands/serve';
@@ -54,6 +56,9 @@ export async function run(): Promise<void> {
   program.addCommand(routeListCommand());
   program.addCommand(routeCacheCommand());
   program.addCommand(routeClearCommand());
+program.addCommand(permissionInstallCommand());
+program.addCommand(permissionShowCommand());
+program.addCommand(permissionCreateCommand());
   program.addCommand(migrateCommand());
   program.addCommand(migrateRollbackCommand());
   program.addCommand(migrateFreshCommand());

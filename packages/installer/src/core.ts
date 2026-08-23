@@ -123,6 +123,12 @@ export async function fetchCore(version = 'latest'): Promise<string> {
       copyTree(cliTemplate, join(coreDir, 'template'));
     }
 
+    // Merge: cli/template-admin/ → core/template-admin/ (admin overlay).
+    const cliAdmin = join(cliDir, 'template-admin');
+    if (existsSync(join(cliAdmin, 'routes', 'admin.ts'))) {
+      copyTree(cliAdmin, join(coreDir, 'template-admin'));
+    }
+
     // 3. Download and extract @chavajs/inertia-react, merge into core layout.
     //    Mirrors the monorepo assembly: inertia-react/src/** → src/inertia/**.
     try {
@@ -136,6 +142,19 @@ export async function fetchCore(version = 'latest'): Promise<string> {
     } catch {
       // Older registries may not carry the adapter — scaffold still works for
       // API-only apps; InertiaServiceProvider will surface a clear error.
+    }
+
+    // 4. Download chava-permissions (roles & permissions) → src/permissions/.
+    try {
+      const permDir = join(tmp, 'permissions');
+      mkdirSync(permDir, { recursive: true });
+      await downloadPkg('chava-permissions', version, permDir).catch(async () => downloadPkg('chava-permissions', 'latest', permDir));
+      const permSrc = join(permDir, 'src');
+      if (existsSync(join(permSrc, 'core', 'Registrar.ts'))) {
+        copyTree(permSrc, join(coreDir, 'src', 'permissions'));
+      }
+    } catch {
+      // Optional package — scaffold still works without it.
     }
 
     rmSync(cached, { recursive: true, force: true });

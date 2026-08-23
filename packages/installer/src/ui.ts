@@ -217,8 +217,9 @@ export function summaryBox(opts: {
   auth: boolean;
   docs: boolean;
   packageManager: string;
+  admin?: boolean;
 }): void {
-  const { name, database, auth, docs, packageManager } = opts;
+  const { name, database, auth, docs, packageManager, admin } = opts;
   const w = 46;
   const pad = (s: string) => s + ' '.repeat(Math.max(0, w - s.length));
 
@@ -229,6 +230,7 @@ export function summaryBox(opts: {
   console.log(`${ORANGE}  │${RESET}  Database:       ${pc.white(database)}${' '.repeat(Math.max(0, w - 16 - database.length))}${ORANGE}│${RESET}`);
   console.log(`${ORANGE}  │${RESET}  Auth:           ${auth ? pc.green('Yes') : pc.red('No')}${' '.repeat(Math.max(0, w - 16 - (auth ? 3 : 2)))}${ORANGE}│${RESET}`);
   console.log(`${ORANGE}  │${RESET}  Docs:           ${docs ? pc.green('Yes') : pc.red('No')}${' '.repeat(Math.max(0, w - 16 - (docs ? 3 : 2)))}${ORANGE}│${RESET}`);
+  console.log(`${ORANGE}  │${RESET}  Admin:          ${admin ? pc.green('Yes') : pc.red('No')}${' '.repeat(Math.max(0, w - 16 - (admin ? 3 : 2)))}${ORANGE}│${RESET}`);
   console.log(`${ORANGE}  │${RESET}  Package Mgr:    ${pc.white(packageManager)}${' '.repeat(Math.max(0, w - 16 - packageManager.length))}${ORANGE}│${RESET}`);
   console.log(`${ORANGE}  └${'─'.repeat(w)}┘${RESET}`);
   console.log();

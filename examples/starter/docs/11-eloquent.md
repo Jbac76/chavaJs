@@ -55,6 +55,11 @@ const admins = await User.where('active', 1)
 
 const total = await User.count();
 const max = await User.max('age');
+```
+
+> **`where()` operator default:** `where('age', 18)` uses `=` implicitly —
+> the two-argument form is equality. Pass the operator explicitly for
+> comparisons: `where('age', '>=', 18)`.
 const latest = await User.latest().take(5).get();
 ```
 

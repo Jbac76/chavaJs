@@ -29,6 +29,7 @@ const PKG = (name) => join(ROOT, 'packages', name, 'src');
 const ASSEMBLY = [
   { pkg: join(PKG('core')), into: 'src', depth: 0 },
   { pkg: join(PKG('inertia-react')), into: 'src/inertia', depth: 0 },
+  { pkg: join(ROOT, 'packages', 'permissions', 'src'), into: 'src/permissions', depth: 0 },
   { pkg: join(PKG('cli')), into: 'src/cli', depth: 0 },
   { pkg: join(ROOT, 'packages', 'cli', 'bin'), into: 'bin', depth: 0 },
   { pkg: join(ROOT, 'packages', 'core', 'docs'), into: 'docs', depth: 0 },

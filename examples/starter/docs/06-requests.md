@@ -66,6 +66,37 @@ file.getSize();                 // bytes
 file.store('public/avatars');   // save to storage/app/..., returns relative path
 ```
 
+### Upload hardening
+
+`store()` validates **before** anything touches disk:
+
+- **MIME allow-list** — defaults to `image/jpeg`, `image/png`, `image/gif`,
+  `image/webp`, `application/pdf` (SVG is excluded by default because served
+  SVG can execute script). Override per call or globally:
+
+  ```ts
+  file.store('avatars', { allowedMimes: ['application/pdf'], maxSizeBytes: 5 * 1024 * 1024 });
+  ```
+
+  ```ts
+  // config/uploads.ts (optional)
+  export default {
+    allowed_mimes: ['image/jpeg', 'image/png', 'image/webp'],
+    max_size_bytes: 8 * 1024 * 1024,
+  };
+  ```
+
+- **Size cap** — defaults to the 10 MB body limit; override with
+  `maxSizeBytes` or `uploads.max_size_bytes`.
+- **Filename sanitization** — the stored name is a UUID; the client-supplied
+  extension is stripped to bare alphanumerics, so traversal (`../`) and double
+  extensions are impossible.
+
+Rejections throw a `ValidationException` (422 / redirect-back with errors)
+keyed under `file`.
+
+```
+
 ## Validation & Form Requests
 
 Validate inline or with a Form Request class — both throw on failure (a 419/422

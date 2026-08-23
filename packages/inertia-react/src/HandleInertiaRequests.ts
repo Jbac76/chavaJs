@@ -37,6 +37,23 @@ export class HandleInertiaRequests {
     const user = await auth.user();
     const session = request.session();
 
+    // Roles & permissions (chava-permissions) — batched once per request.
+    let can: Record<string, boolean> = {};
+    let roles: string[] = [];
+    if (user) {
+      try {
+        const registrar = this.app.make<{
+          hasPermissionTo: (t: string, id: unknown, n: string) => boolean;
+          rolesOf: (t: string, id: unknown) => Array<{ name: string }>;
+          allPermissionsOf: (t: string, id: unknown) => Array<{ name: string }>;
+        }>('permissions');
+        roles = registrar.rolesOf('users', user.getKey()).map((role) => role.name);
+        can = Object.fromEntries(registrar.allPermissionsOf('users', user.getKey()).map((permission) => [permission.name, true]));
+      } catch {
+        // permissions not installed/configured — omit props silently
+      }
+    }
+
     return {
       app: {
         name: config.get('app.name', 'chavaJs'),
@@ -44,7 +61,7 @@ export class HandleInertiaRequests {
         version: this.app.version,
       },
       auth: {
-        user: user ? user.toArray() : null,
+        user: user ? { ...user.toArray(), can, roles } : null,
         // Unread notification count for the nav badge (Laravel: a query in
         // HandleInertiaRequests or a view composer). Guarded so any model
         // from the auth provider (not just Notifiable subclasses) is safe.

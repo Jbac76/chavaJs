@@ -4,6 +4,7 @@ import { Application } from '../src/foundation/Application';
 import { HandleInertiaRequests } from '../src/inertia/HandleInertiaRequests';
 import { StartSession } from '../src/http/middleware/StartSession';
 import { VerifyCsrfToken } from '../src/http/middleware/VerifyCsrfToken';
+import { PermissionsServiceProvider } from '../src/permissions/integration/chavaJs';
 
 /**
  * The chavaJs application — Laravel's bootstrap/app.php equivalent.
@@ -16,7 +17,7 @@ import { VerifyCsrfToken } from '../src/http/middleware/VerifyCsrfToken';
  */
 export const app = Application.configure({
   name: 'chavaJs',
-  providers: [AppServiceProvider, RouteServiceProvider],
+  providers: [AppServiceProvider, RouteServiceProvider, PermissionsServiceProvider],
   globalMiddleware: [],
   webMiddleware: [StartSession, HandleInertiaRequests, VerifyCsrfToken],
   apiMiddleware: [],

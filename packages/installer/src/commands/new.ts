@@ -120,6 +120,7 @@ export function copyDocs(sourceRoot: string, targetDir: string): boolean {
 const FRAMEWORK_ASSEMBLY = [
   { pkg: ['core', 'src'], into: ['src'] },
   { pkg: ['inertia-react', 'src'], into: ['src', 'inertia'] },
+  { pkg: ['permissions', 'src'], into: ['src', 'permissions'] },
   { pkg: ['cli', 'src'], into: ['src', 'cli'] },
   { pkg: ['cli', 'bin'], into: ['bin'] },
 ];
@@ -272,6 +273,7 @@ interface NewOptions {
   database?: string;
   auth?: boolean;
   docs?: boolean;
+  admin?: boolean;
   packageManager?: string;
   skipInstall?: boolean;
   framework?: string;
@@ -310,13 +312,14 @@ async function resolveSourceRoots(opts: NewOptions): Promise<{ repoRoot: string 
   return { repoRoot: null, pkgRoot };
 }
 
-async function collectOptions(options: NewOptions): Promise<Required<Pick<NewOptions, 'name' | 'database' | 'packageManager'>> & { withAuth: boolean; includeDocs: boolean }> {
+async function collectOptions(options: NewOptions): Promise<Required<Pick<NewOptions, 'name' | 'database' | 'packageManager'>> & { withAuth: boolean; includeDocs: boolean; withAdmin: boolean }> {
   const interactive = stdin.isTTY;
 
   let name = options.name;
   let database = options.database;
   let withAuth = options.auth;
   let includeDocs = options.docs;
+  let withAdmin = options.admin;
   let packageManager = options.packageManager;
 
   if (!name) {
@@ -351,6 +354,17 @@ async function collectOptions(options: NewOptions): Promise<Required<Pick<NewOpt
       : true;
   }
 
+  if (withAuth && withAdmin === undefined) {
+    withAdmin = interactive
+      ? await selectYesNo('Include admin dashboard (roles & permissions)?', false)
+      : false;
+  }
+  // The dashboard requires auth — auto-enable when requested without it.
+  if (withAdmin === true && !withAuth) {
+    warn('The admin dashboard requires authentication - enabling auth.');
+    withAuth = true;
+  }
+
   if (!packageManager) {
     packageManager = interactive
       ? await selectOption('Package manager', PACKAGE_MANAGERS, 0)
@@ -361,15 +375,16 @@ async function collectOptions(options: NewOptions): Promise<Required<Pick<NewOpt
     process.exit(1);
   }
 
-  return { name, database, withAuth, includeDocs, packageManager };
+  return { name, database, withAuth, includeDocs, withAdmin: withAdmin === true, packageManager };
 }
 
 async function scaffoldNewApp(opts: NewOptions): Promise<void> {
-  const { name, database, withAuth, includeDocs, packageManager } = await collectOptions(opts);
+  const { name, database, withAuth, includeDocs, withAdmin, packageManager } = await collectOptions(opts);
 
   const { repoRoot, pkgRoot } = await resolveSourceRoots(opts);
   const standalone = repoRoot === null;
   const templateDir = join(pkgRoot, 'template');
+  const adminTemplateDir = join(pkgRoot, 'template-admin');
   const hasTemplate = existsSync(join(templateDir, 'package.json'));
   const targetDir = resolve(process.cwd(), name);
 
@@ -379,12 +394,13 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
 
   // Show logo and summary
   printLogo();
-  summaryBox({ name, database, auth: withAuth, docs: includeDocs, packageManager });
+  summaryBox({ name, database, auth: withAuth, docs: includeDocs, packageManager, admin: withAdmin });
 
   // Progress steps
   const steps = [
     'Scaffolding framework core',
     'Copying starter template',
+    withAdmin ? 'Copying admin dashboard' : null,
     includeDocs ? 'Copying framework docs' : null,
     'Configuring database',
     'Setting up authentication',
@@ -414,6 +430,26 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
     copyTree(templateDir, targetDir);
   } else {
     copyProjectTree(process.cwd(), targetDir);
+  }
+  progress.step();
+
+  // 2a. Admin dashboard overlay (config/routes/controllers/pages).
+  if (withAdmin && existsSync(join(adminTemplateDir, 'routes', 'admin.ts'))) {
+    copyTree(adminTemplateDir, targetDir);
+    // Register the admin routes in the app's RouteServiceProvider.
+    const rspPath = join(targetDir, 'app', 'Providers', 'RouteServiceProvider.ts');
+    if (existsSync(rspPath)) {
+      let source = readFileSync(rspPath, 'utf8');
+      source = source.replace(
+        /^(import[^\n]*\n)/m,
+        "import { existsSync } from 'node:fs';\nimport { join } from 'node:path';\n$1",
+      );
+      source = source.replace(
+        "await import('../../routes/console');",
+        "if (existsSync(join(process.cwd(), 'routes', 'admin.ts'))) {\n      await import('../../routes/admin');\n    }\n    await import('../../routes/console');",
+      );
+      writeFileSync(rspPath, source);
+    }
   }
   progress.step();
 
@@ -543,6 +579,8 @@ export function newProjectCommand(): Command {
     .option('--no-auth', 'omit the authentication UI')
     .option('--docs', 'include the framework documentation (served at /docs)')
     .option('--no-docs', 'omit the framework documentation')
+    .option('--admin', 'include the admin dashboard (requires auth; implies roles & permissions)')
+    .option('--no-admin', 'omit the admin dashboard')
     .option('--package-manager <pm>', `package manager: ${PACKAGE_MANAGERS.join(' | ')} (default: npm)`)
     .option('--skip-install', "don't run the package manager after scaffolding")
     .option('--framework <path>', 'chavaJs checkout to assemble the framework from')
@@ -553,6 +591,7 @@ export function newProjectCommand(): Command {
         database: options.database as string | undefined,
         auth: options.auth as boolean | undefined,
         docs: options.docs as boolean | undefined,
+        admin: options.admin as boolean | undefined,
         packageManager: options.packageManager as string | undefined,
         skipInstall: options.skipInstall as boolean | undefined,
         framework: options.framework as string | undefined,
