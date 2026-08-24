@@ -11,9 +11,10 @@ interface RegistrarLike {
 }
 
 export class UserController extends Controller {
-  /** GET /users — paginated directory, eager-loaded with posts. */
+  /** GET /users?page=N — paginated directory, eager-loaded with posts. */
   public async index(request: Request) {
-    const paginator = await User.with('posts').orderBy('name').paginate(10);
+    const page = Math.max(1, Number(request.input('page', 1)) || 1);
+    const paginator = await User.with('posts').orderBy('name').paginate(10, page);
     const registrar = currentApp().make<RegistrarLike>('permissions');
     const actor = await request.user();
 

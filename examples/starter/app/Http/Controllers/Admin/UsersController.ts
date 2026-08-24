@@ -43,7 +43,7 @@ export class AdminUsersController extends Controller {
         builder.orWhere('email', 'like', `%${q}%`);
       });
     }
-    const paginator = await query.paginate(25);
+    const paginator = await query.paginate(25, page);
 
     const registrar = currentApp().make<RegistrarLike>('permissions');
 

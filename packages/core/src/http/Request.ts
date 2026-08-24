@@ -446,7 +446,12 @@ function buildQuery(url: URL): Record<string, string | string[]> {
 }
 
 async function readBody(req: IncomingMessage, method: string): Promise<Buffer> {
-  if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') return Buffer.alloc(0);
+  const isNoBodyMethod = method === 'HEAD' || method === 'OPTIONS';
+  const hasContentType = req.headers['content-type'] !== undefined;
+  const hasContentLength = (req.headers['content-length'] ?? req.headers['transfer-encoding']) !== undefined;
+  if (isNoBodyMethod) return Buffer.alloc(0);
+  // For GET, only read body if the client explicitly sent one (Inertia XHR).
+  if (method === 'GET' && !hasContentLength) return Buffer.alloc(0);
 
   // Reject early if Content-Length exceeds the limit — avoids buffering the
   // entire body into memory before failing.
