@@ -139,7 +139,7 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6 sm:py-14">
+      <main className="w-full flex-1 px-4 py-10 sm:px-6 sm:py-14">
         <motion.div {...transition}>{children}</motion.div>
       </main>
 

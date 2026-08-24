@@ -2,19 +2,34 @@ import { Inertia } from '../../../src/facades';
 import { Controller } from '../../../src/http/Controller';
 import { Request } from '../../../src/http/Request';
 import { Response } from '../../../src/http/Response';
+import { currentApp } from '../../../src/foundation/registry';
 import { User } from '../../Models/User';
 
+interface RegistrarLike {
+  rolesOf: (type: string, id: unknown) => Array<{ name: string }>;
+  allPermissionsOf: (type: string, id: unknown) => Array<{ name: string }>;
+}
+
 export class UserController extends Controller {
-  /** GET /users — paginated list, eager-loaded with posts. */
+  /** GET /users — paginated directory, eager-loaded with posts. */
   public async index(request: Request) {
     const paginator = await User.with('posts').orderBy('name').paginate(10);
+    const registrar = currentApp().make<RegistrarLike>('permissions');
+    const actor = await request.user();
+
     return Inertia.render('Users/Index', {
       users: {
         ...paginator,
-        data: paginator.data.map((user) => user.toArray()),
+        data: paginator.data.map((user) => ({
+          ...user.toArray(),
+          roles: registrar.rolesOf('users', user.getKey()).map((role) => role.name),
+          permissions: registrar.allPermissionsOf('users', user.getKey()).map((p) => p.name),
+        })),
       },
       can: {
-        deleteUser: await this.canDelete(request),
+        viewUser: !!actor,
+        editUser: !!actor,
+        deleteUser: !!actor, // the UserPolicy enforces the real rules
       },
     });
   }
@@ -37,7 +52,7 @@ export class UserController extends Controller {
   private async canDelete(request: Request): Promise<boolean> {
     const authUser = await request.user();
     if (!authUser) return false;
-    // Any user can delete *their own* account — the policy handles it.
+    // Any user can delete *their own* account - the policy handles it.
     return true;
   }
 }
