@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { x as extractTar } from 'tar';
@@ -76,16 +76,37 @@ export async function fetchCore(version = 'latest'): Promise<string> {
   const cacheRoot = join(homedir(), '.chava', 'core');
   const cached = join(cacheRoot, meta.version);
 
-  // Already cached with CLI + inertia adapter + commands parity? Return early.
-  // The permission-assign marker catches caches built from older @chavajs/cli
-  // tarballs that lack newer commands — those get rebuilt automatically.
-  if (
-    existsSync(join(cached, 'src', 'foundation', 'Application.ts')) &&
-    existsSync(join(cached, 'src', 'cli', 'index.ts')) &&
-    existsSync(join(cached, 'src', 'inertia', 'HtmlRenderer.ts')) &&
-    existsSync(join(cached, 'src', 'cli', 'commands', 'permission-assign.ts'))
-  ) {
-    return cached;
+  // Resolve companion versions up-front so the manifest reflects EXACTLY what
+  // this rebuild will merge. Any drift between cache and registry -> rebuild.
+  const cliMeta = await resolvePkgMeta('@chavajs/cli', 'latest');
+  const inertiaMeta = await resolvePkgMeta('@chavajs/inertia-react', 'latest').catch(() => null);
+  const permissionsMeta = await resolvePkgMeta('chava-permissions', 'latest').catch(() => null);
+
+  const expectedManifest: Record<string, string> = {
+    core: meta.version,
+    cli: cliMeta.version,
+    ...(inertiaMeta ? { inertia: inertiaMeta.version } : {}),
+    ...(permissionsMeta ? { permissions: permissionsMeta.version } : {}),
+  };
+
+  // Cache hit ONLY when every component version matches the registry.
+  const manifestPath = join(cached, '.chava-versions.json');
+  if (existsSync(manifestPath)) {
+    try {
+      const cachedManifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as Record<string, string>;
+      const matches = Object.entries(expectedManifest).every(
+        ([pkg, v]) => cachedManifest[pkg] === v,
+      );
+      const complete =
+        existsSync(join(cached, 'src', 'foundation', 'Application.ts')) &&
+        existsSync(join(cached, 'src', 'cli', 'index.ts')) &&
+        existsSync(join(cached, 'src', 'inertia', 'HtmlRenderer.ts')) &&
+        existsSync(join(cached, 'src', 'cli', 'commands', 'permission-assign.ts'));
+      if (matches && complete) return cached;
+      console.log(`  ⚠  Framework cache outdated (${meta.version}) — refreshing from npm…`);
+    } catch {
+      // Corrupt manifest -> rebuild below.
+    }
   }
 
   mkdirSync(cacheRoot, { recursive: true });
@@ -162,6 +183,12 @@ export async function fetchCore(version = 'latest'): Promise<string> {
 
     rmSync(cached, { recursive: true, force: true });
     renameSync(coreDir, cached);
+
+    // Persist the component manifest for future cache-validity checks.
+    writeFileSync(
+      join(cached, '.chava-versions.json'),
+      JSON.stringify(expectedManifest, null, 2),
+    );
     return cached;
   } finally {
     rmSync(tmp, { recursive: true, force: true });
