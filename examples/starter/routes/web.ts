@@ -20,8 +20,10 @@ Route.get('/about', [AboutController, 'index']).name('about');
 // Route model binding: {user} resolves to a User model, 404 when missing.
 Route.model('user', User);
 
-Route.get('/users', [UserController, 'index']).name('users.index');
-Route.get('/users/{user}', [UserController, 'show']).name('users.show');
+// Members-only directory — guests are redirected to /login by the auth
+// middleware (Laravel Breeze-style gated section).
+Route.get('/users', [UserController, 'index']).middleware('auth').name('users.index');
+Route.get('/users/{user}', [UserController, 'show']).middleware('auth').name('users.show');
 Route.delete('/users/{user}', [UserController, 'destroy']).middleware('auth', 'can:delete,user').name('users.destroy');
 
 // ---- Authentication (Laravel Breeze equivalent) ----

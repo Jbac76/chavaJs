@@ -229,7 +229,7 @@ bundles its framework.
   X-Frame-Options, X-Content-Type-Options), **global CORS** with origin
   allow-list + preflight handling, **upload hardening** (MIME allow-list,
   size caps, sanitized extensions)
-- **Admin dashboard**: full Users CRUD (Laravel resource controller + FormRequest) with a live-search TanStack data table, every verb gated by chava-permissions RBAC **and** a UserPolicy through the Gate
+- **Members-only directory**: the public /users listing requires login — nav link hidden for guests, direct hits redirect to /login`n- **Admin dashboard**: full Users CRUD (Laravel resource controller + FormRequest) with a live-search TanStack data table, every verb gated by chava-permissions RBAC **and** a UserPolicy through the Gate
 - **Operations**: **graceful shutdown** (SIGTERM drains requests, closes DB
   pools + cache timers, 30s forced-exit guard), consistent machine-readable
   error envelope (`error.code` / `error.details`), `X-Request-ID` correlation

@@ -571,17 +571,54 @@ async function scaffoldNewApp(opts: NewOptions): Promise<void> {
     // work out of the box (auth-free scaffolds skip migration entirely).
     if (withAuth) {
       const tty = process.stdout.isTTY;
-      if (tty) process.stdout.write('  ●  Running database migrations…');
-      else console.log('  Running database migrations…');
-      const migRaw = spawnSync('node bin/chava.js migrate', { cwd: targetDir, shell: true, stdio: ['ignore','pipe','pipe'], encoding: 'utf8' });
-      const mig = { status: migRaw.status ?? 1, output: ((migRaw.stderr || '') + ' ' + (migRaw.stdout || '')).split('\n').filter(Boolean).slice(-4).join(' | ') };
       const report = (ok: boolean, doneLine: string, warnLine: string): void => {
         if (tty) process.stdout.write('\r\x1b[K');
         if (ok) console.log(`  ✓  ${doneLine}`);
         else warn(warnLine);
       };
-      migrated = mig.status === 0;
-      report(migrated, 'Database migrated.', 'Migration failed' + (mig.output ? ' — ' + mig.output : '') + ' — run `js migrate` inside the app to retry.');
+
+      const classifyMigrationError = (output: string): string | null => {
+        if (/does not exist/i.test(output) && /database/i.test(output))
+          return 'Database does not exist yet — create it first (Postgres: `createdb <name>`, MySQL: `CREATE DATABASE`).';
+        if (/econnrefused|connection refused|could not connect/i.test(output))
+          return 'Could not reach the database server — is it running? Check DB_HOST / DB_PORT in .env.';
+        if (/password authentication failed|role .* does not exist/i.test(output))
+          return 'Credentials rejected — check DB_USERNAME / DB_PASSWORD in .env.';
+        return null;
+      };
+
+      let attempt = 0;
+      const maxAttempts = tty ? 3 : 1;
+      while (!migrated && attempt < maxAttempts) {
+        attempt++;
+        if (tty) process.stdout.write(attempt === 1 ? '  ●  Running database migrations…' : '  ●  Retrying migrations…');
+        else console.log('  Running database migrations…');
+        const migRaw = spawnSync('node bin/chava.js migrate', { cwd: targetDir, shell: true, stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' });
+        const output = ((migRaw.stderr || '') + '\n' + (migRaw.stdout || '')).trim();
+        migrated = (migRaw.status ?? 1) === 0;
+        if (migrated) { report(true, 'Database migrated.', ''); break; }
+
+        const hint = classifyMigrationError(output) ?? 'Check the error above and your .env settings.';
+        const tail = output.split('\n').filter(Boolean).slice(-3).join(' | ');
+        report(false, '', hint);
+        if (tail && !/^\s*$/.test(tail)) info(`output: ${tail}`);
+
+        // Interactive recovery loop — non-TTY (CI/piped) warns and continues.
+        if (tty && attempt < maxAttempts) {
+          const rl = createInterface({ input: stdin, output: stdout });
+          const answer = (await rl.question('  Fix the issue, then [R]etry migration / [S]kip setup / [Q]uit? ')).trim().toLowerCase();
+          rl.close();
+          if (answer === 'q' || answer === 'quit') await gracefulExit(0);
+          if (answer === 's' || answer === 'skip') break;
+        }
+      }
+
+      if (!migrated) {
+        info(`Finish setup manually: cd ${name} && ${packageManager === 'yarn' ? 'yarn' : `${packageManager} install`} && node bin/chava.js migrate`);
+        if (withAdmin) {
+          info('Then provision admin: node bin/chava.js db:seed && node bin/chava.js permission:install && node bin/chava.js permission:assign super-admin admin@chavajs.com');
+        }
+      }
 
       // Admin scaffolds provision the dashboard account automatically.
       // Uses the app's OWN bin (node bin/chava.js) — never `npx js`, which

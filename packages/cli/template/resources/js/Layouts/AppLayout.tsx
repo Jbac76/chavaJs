@@ -22,10 +22,11 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
   const hasDocs = props.hasDocs ?? false;
   const transition = useInertiaTransition();
 
+  // Members-only directory: guests never see a link that would bounce them.
   const NAV_ITEMS = [
     { href: '/', label: 'Home' },
-      { href: '/about', label: 'About' },
-      { href: '/users', label: 'Users' },
+    { href: '/about', label: 'About' },
+    ...(user ? [{ href: '/users', label: 'Users' }] : []),
   ];
 
   return (
