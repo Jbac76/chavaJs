@@ -21,6 +21,7 @@ import { AdminUserFormRequest } from '../../Requests/AdminUserFormRequest';
 interface RegistrarLike {
   allRoles: () => Array<{ id: number; name: string }>;
   rolesOf: (type: string, id: unknown) => Array<{ name: string }>;
+  allPermissionsOf: (type: string, id: unknown) => Array<{ name: string }>;
   syncModelRoles: (type: string, id: unknown, roles: string[]) => Promise<void>;
 }
 
@@ -45,7 +46,6 @@ export class AdminUsersController extends Controller {
     const paginator = await query.paginate(25);
 
     const registrar = currentApp().make<RegistrarLike>('permissions');
-    const actor = await request.user();
 
     return Inertia.render('Admin/Users/Index', {
       users: {
@@ -53,6 +53,8 @@ export class AdminUsersController extends Controller {
         data: paginator.data.map((user) => ({
           ...user.toArray(),
           roles: registrar.rolesOf('users', user.getKey()).map((role) => role.name),
+          permissions: registrar.allPermissionsOf('users', user.getKey()).map((p) => p.name),
+          verified: user.getAttribute('email_verified_at') !== null,
         })),
       },
       q,
@@ -60,7 +62,6 @@ export class AdminUsersController extends Controller {
         create: true, // reached only with users.create middleware
         update: true,
         delete: true,
-        _actorId: actor?.getKey() ?? null,
       },
       roles: registrar.allRoles().map((role) => role.name),
     });
@@ -162,12 +163,6 @@ export class AdminUsersController extends Controller {
       session.save();
     }
   }
-}
-
-interface RegistrarLike {
-  allRoles: () => Array<{ id: number; name: string }>;
-  rolesOf: (type: string, id: unknown) => Array<{ name: string }>;
-  syncModelRoles: (type: string, id: unknown, roles: string[]) => Promise<void>;
 }
 
 async function syncRolesFor(user: User, roles: unknown): Promise<void> {

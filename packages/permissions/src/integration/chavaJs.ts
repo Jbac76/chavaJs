@@ -239,10 +239,48 @@ export class PermissionsServiceProvider extends ServiceProvider {
     router.middlewareAlias('role', RoleMiddleware as never);
     router.middlewareAlias('permission', PermissionMiddleware);
 
-    // Warm the registrar once tables exist; a missing table should not kill boot.
+    // Warm the registrar; auto-install tables on first boot so the RBAC
+    // system works out of the box (zero-touch, like `permission:install`).
     try {
       const registrar = this.app.make<Registrar>('permissions');
-      await registrar.warmUp();
+      try {
+        await registrar.warmUp();
+      } catch {
+        const db = this.app.make<DbLike>('db');
+        const conn = db.connection();
+        for (const sql of SqlStore.SCHEMA) await conn.exec(sql);
+        const { CRUD_PERMISSIONS } = await import('../core/catalog');
+        for (const name of CRUD_PERMISSIONS) {
+          await conn.run(
+            'INSERT OR IGNORE INTO permissions (name, guard_name) VALUES (?, ?)',
+            [name, 'web'],
+          );
+        }
+        await conn.exec("INSERT OR IGNORE INTO roles (name, guard_name) VALUES ('super-admin', 'web')");
+        await conn.exec("INSERT OR IGNORE INTO permissions (name, guard_name) VALUES ('*', 'web')");
+        await conn.run(
+          'INSERT OR IGNORE INTO role_has_permissions (permission_id, role_id) SELECT p.id, r.id FROM permissions p, roles r WHERE p.name = ? AND r.name = ?',
+          ['*', 'super-admin'],
+        );
+        await registrar.warmUp();
+      }
+
+      // Legacy bridge: seeded users with is_admin=1 become super-admins so
+      // existing demos work without manual `permission:assign`.
+      try {
+        const db = this.app.make<DbLike>('db');
+        const rows = await db.connection().query<{ id: number | string }>(
+          'SELECT id FROM users WHERE is_admin = 1',
+        );
+        for (const row of rows) {
+          const key = String(row.id);
+          if (!registrar.hasRole('users', key, 'super-admin')) {
+            await registrar.assignRolesToModel('users', key, ['super-admin']);
+          }
+        }
+      } catch {
+        // No users table (non-auth app) — nothing to bridge.
+      }
 
       // Gate bridge: wildcard superusers pass every ability check.
       const gate = this.app.make<{ before: (cb: unknown) => unknown }>('gate');
@@ -254,7 +292,7 @@ export class PermissionsServiceProvider extends ServiceProvider {
         return undefined; // fall through to policies/abilities
       });
     } catch {
-      // Tables not installed yet (`js permission:install`) — stay inert.
+      // Registrar unavailable — stay inert.
     }
   }
 }

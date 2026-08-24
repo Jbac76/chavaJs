@@ -48,8 +48,8 @@ describe('Database (Phase 3) HTTP endpoints', () => {
   it('seeds users with posts through factories', async () => {
     const page = await fetchInertia('/users');
     const users = page.props.users;
-    expect(users?.total).toBe(8);
-    expect(users?.data).toHaveLength(8);
+    expect(Number(users?.total)).toBeGreaterThanOrEqual(100);
+    expect(users?.data).toHaveLength(10);
   });
 
   it('lists users eager-loaded with their posts', async () => {
@@ -68,9 +68,9 @@ describe('Database (Phase 3) HTTP endpoints', () => {
     expect(page.props.users).toMatchObject({
       current_page: 1,
       per_page: 10,
-      last_page: 1,
+      last_page: 10,
       from: 1,
-      to: 8,
+      to: 10,
     });
   });
 

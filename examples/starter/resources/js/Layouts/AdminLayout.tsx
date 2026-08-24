@@ -18,6 +18,7 @@ export default function AdminLayout({ children }: { children?: ReactNode }) {
   const { url, props } = usePage<{ auth?: { user?: { can?: Record<string, boolean> } | null } }>();
   const can = props.auth?.user?.can ?? {};
 
+  // Ordered by workflow frequency: overview first, then people, then access control.
   const NAV_ITEMS: NavItem[] = [
     { label: 'Dashboard', href: '/admin', icon: 'dashboard' },
     { label: 'Users', href: '/admin/users', permission: 'users.view', icon: 'users' },

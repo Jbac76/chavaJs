@@ -22,8 +22,8 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
 
   const NAV_ITEMS = [
     { href: '/', label: 'Home' },
-    { href: '/users', label: 'Users' },
-    { href: '/about', label: 'About' },
+      { href: '/about', label: 'About' },
+      { href: '/users', label: 'Users' },
   ];
 
   return (

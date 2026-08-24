@@ -31,17 +31,20 @@ export class DatabaseSeeder extends Seeder {
     member.setAttribute('email_verified_at', new Date());
     await member.save();
 
-    // Extra demo users + posts only on first seed (keeps re-seeds fast).
-    const alreadySeeded = (await User.where('email', 'like', '%@example.com').first());
+    // Posts for the two named accounts so every user has demo content.
+    await PostFactory.new().count(2).for(admin).create();
+    await PostFactory.new().count(2).for(member).create();
+
+    // ~100 demo users for testing tables/filters/pagination. Every fifth
+    // account stays unverified so the Status column has variety. Only on
+    // first seed (keeps re-seeds fast and idempotent).
+    const alreadySeeded = await User.where('email', 'like', '%@example.com').first();
     if (!alreadySeeded) {
-      const regular = (await UserFactory.new().count(6).create()) as User[];
-      const users = [admin, member, ...regular];
-      for (const user of users) {
-        if (!user.getAttribute('email_verified_at')) {
-          user.setAttribute('password', hashed);
-          user.setAttribute('email_verified_at', new Date());
-          await user.save();
-        }
+      const regular = (await UserFactory.new().count(98).create()) as User[];
+      for (const [index, user] of regular.entries()) {
+        user.setAttribute('password', hashed);
+        if (index % 5 !== 4) user.setAttribute('email_verified_at', new Date());
+        await user.save();
         // ->for($user) sets user_id from the parent; two posts per user.
         await PostFactory.new().count(2).for(user).create();
       }
